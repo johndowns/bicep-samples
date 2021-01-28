@@ -11,6 +11,7 @@ resource eventGridTopic 'Microsoft.EventGrid/topics@2020-06-01' = {
 
 resource eventGridSubscription 'Microsoft.EventGrid/topics/providers/eventSubscriptions@2020-06-01' = {
   location: location
+  scope: eventGridTopic
   name: '${eventGridTopicName}/Microsoft.EventGrid/${eventGridSubscriptionName}'
   properties: {
     destination: {
@@ -25,7 +26,4 @@ resource eventGridSubscription 'Microsoft.EventGrid/topics/providers/eventSubscr
       ]
     }
   }
-  dependsOn: [
-    eventGridTopic
-  ]
 }

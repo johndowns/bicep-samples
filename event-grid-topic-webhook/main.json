@@ -28,6 +28,7 @@
     {
       "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
       "apiVersion": "2020-06-01",
+      "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('eventGridTopicName'))]",
       "location": "[parameters('location')]",
       "name": "[format('{0}/Microsoft.EventGrid/{1}', parameters('eventGridTopicName'), parameters('eventGridSubscriptionName'))]",
       "properties": {
@@ -38,7 +39,9 @@
           }
         },
         "filter": {
-          "includedEventTypes": null
+          "includedEventTypes": [
+            "All"
+          ]
         }
       },
       "dependsOn": [
