@@ -27,7 +27,15 @@ resource rulesEngine 'Microsoft.Network/frontDoors/rulesEngines@2020-05-01' = {
         name: 'MyRule'
         priority: 1
         matchConditions: []
-        action: {}
+        action: {
+          requestHeaderActions: [
+            {
+              headerActionType: 'Append'
+              headerName: 'my-header'
+              value: 'AddedByFrontDoor'
+            }
+          ]
+        }
       }
     ]
   }

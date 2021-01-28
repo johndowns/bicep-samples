@@ -24,7 +24,15 @@
             "name": "MyRule",
             "priority": 1,
             "matchConditions": [],
-            "action": {}
+            "action": {
+              "requestHeaderActions": [
+                {
+                  "headerActionType": "Append",
+                  "headerName": "my-header",
+                  "value": "AddedByFrontDoor"
+                }
+              ]
+            }
           }
         ]
       },
