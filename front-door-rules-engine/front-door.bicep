@@ -8,10 +8,6 @@ var healthProbeSettingsName = 'healthProbeSettings'
 var routingRuleName = 'routingRule'
 var backendPoolName = 'backendPool'
 
-var rulesEngine = (!(rulesEngineId == '')) ? {
-  id: rulesEngineId
-} : null
-
 resource frontDoor 'Microsoft.Network/frontDoors@2020-01-01' = {
   name: frontDoorName
   location: 'global'
@@ -98,9 +94,9 @@ resource frontDoor 'Microsoft.Network/frontDoors@2020-01-01' = {
               id: resourceId('Microsoft.Network/frontDoors/backEndPools', frontDoorName, backendPoolName)
             }
           }
-          rulesEngine: {
-            id: ''
-          }
+          rulesEngine: (!(rulesEngineId == '')) ? {
+            id: rulesEngineId
+          } : null
           enabledState: 'Enabled'
         }
       }

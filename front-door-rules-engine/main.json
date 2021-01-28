@@ -72,8 +72,7 @@
             "loadBalancingSettingsName": "loadBalancingSettings",
             "healthProbeSettingsName": "healthProbeSettings",
             "routingRuleName": "routingRule",
-            "backendPoolName": "backendPool",
-            "rulesEngine": "[if(not(equals(parameters('rulesEngineId'), '')), createObject('id', parameters('rulesEngineId')), null())]"
+            "backendPoolName": "backendPool"
           },
           "resources": [
             {
@@ -159,9 +158,7 @@
                           "id": "[resourceId('Microsoft.Network/frontDoors/backEndPools', parameters('frontDoorName'), variables('backendPoolName'))]"
                         }
                       },
-                      "rulesEngine": {
-                        "id": ""
-                      },
+                      "rulesEngine": "[if(not(equals(parameters('rulesEngineId'), '')), createObject('id', parameters('rulesEngineId')), null())]",
                       "enabledState": "Enabled"
                     }
                   }
@@ -212,8 +209,7 @@
             "loadBalancingSettingsName": "loadBalancingSettings",
             "healthProbeSettingsName": "healthProbeSettings",
             "routingRuleName": "routingRule",
-            "backendPoolName": "backendPool",
-            "rulesEngine": "[if(not(equals(parameters('rulesEngineId'), '')), createObject('id', parameters('rulesEngineId')), null())]"
+            "backendPoolName": "backendPool"
           },
           "resources": [
             {
@@ -299,9 +295,7 @@
                           "id": "[resourceId('Microsoft.Network/frontDoors/backEndPools', parameters('frontDoorName'), variables('backendPoolName'))]"
                         }
                       },
-                      "rulesEngine": {
-                        "id": ""
-                      },
+                      "rulesEngine": "[if(not(equals(parameters('rulesEngineId'), '')), createObject('id', parameters('rulesEngineId')), null())]",
                       "enabledState": "Enabled"
                     }
                   }
