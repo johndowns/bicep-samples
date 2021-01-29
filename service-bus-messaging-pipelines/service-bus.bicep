@@ -8,12 +8,15 @@ param skuName string {
   ]
   default: 'Standard'
 }
+param topicNames array = [
+  'todo1'
+  'todo2'
+]
 
 var firehoseQueueName = 'firehose'
 var firehoseSubscriptionName = 'firehose'
 var deadLetterFirehoseQueueName = 'deadletteredfirehose'
 var processSubscriptionName = 'process'
-var topic1Name = 'topic1'
 
 resource namespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview' = {
   name: namespaceName
@@ -46,30 +49,31 @@ resource deadLetterFirehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01
   }
 }
 
-// TODO the below should be updated with a loop when Bicep supports this.
-
-resource topic1 'Microsoft.ServiceBus/namespaces/topics@2018-01-01-preview' = {
-  name: '${namespace.name}/${topic1Name}'
+// Topics for each message type.
+resource[] topics 'Microsoft.ServiceBus/namespaces/topics@2018-01-01-preview' = [for topicName in topicNames: {
+  name: '${namespace.name}/${topicName}'
   properties: {
   }
-}
+}]
 
-resource topic1SubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = {
-  name: '${namespace.name}/${topic1Name}/${firehoseSubscriptionName}'
+// Subscription to forward a copy of every message to the firehose queue.
+resource[] topicsSubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
+  name: '${namespace.name}/${topicName}/${firehoseSubscriptionName}'
   dependsOn: [
     firehoseQueue
   ]
   properties: {
     forwardTo: firehoseQueueName
   }
-}
+}]
 
-resource topic1SubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = {
-  name: '${namespace.name}/${topic1Name}/${processSubscriptionName}'
+// Subscription for the primary processing of the messages coming into the topic, with dead-lettered messages automatically forwarded to the dead-letter firehose queue.
+resource[] topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
+  name: '${namespace.name}/${topicName}/${processSubscriptionName}'
   dependsOn: [
     deadLetterFirehoseQueue
   ]
   properties: {
     forwardDeadLetteredMessagesTo: deadLetterFirehoseQueueName
   }
-}
+}]
