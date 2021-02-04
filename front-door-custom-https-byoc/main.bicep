@@ -1,7 +1,7 @@
 param frontDoorName string
 param backendAddress string
 param customDomainName string
-param certificateKeyVaultId string // The resource ID of the Key Vault containing the secret, e.g. /subscriptions/{subscriptionId}/resourcegroups/{resourceGroup}/providers/{provider}/vaults/{vault}.
+param certificateKeyVaultId string // The resource ID of the Key Vault containing the secret, e.g. /subscriptions/{subscriptionId}/resourcegroups/{resourceGroup}/providers/Microsoft.KeyVault/vaults/{vault}.
 param certificateSecretName string // The name of the Key Vault secret that contains the encoded X.509 certificate; this is just a simple name, e.g. "mycertificate".
 param certificateSecretVersion string = '' // A specific version of the secret to use. If you omit this, I *think* Front Door uses the most recent version. It's usually best practice to include this if you can though.
 
