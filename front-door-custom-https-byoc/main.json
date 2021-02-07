@@ -69,7 +69,7 @@
             "name": "[variables('healthProbeSettingsName')]",
             "properties": {
               "path": "/",
-              "protocol": "Http",
+              "protocol": "Https",
               "intervalInSeconds": 120
             }
           }
@@ -83,7 +83,7 @@
                   "address": "[parameters('backendAddress')]",
                   "backendHostHeader": "[parameters('backendAddress')]",
                   "httpPort": 80,
-                  "httpsPort": 442,
+                  "httpsPort": 443,
                   "weight": 50,
                   "priority": 1,
                   "enabledState": "Enabled"
