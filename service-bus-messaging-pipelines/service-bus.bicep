@@ -1,13 +1,18 @@
+@description('The region into which the Service Bus resources should be deployed.')
 param location string = resourceGroup().location
+
+@description('The name of the Service Bus namespace to deploy. This must be globally unique.')
 param namespaceName string = 'sb-${uniqueString(resourceGroup().id)}'
-param skuName string {
-  allowed: [
-    'Basic'
-    'Standard'
-    'Premium'
-  ]
-  default: 'Standard'
-}
+
+@description('The SKU of Service Bus to deploy.')
+@allowed([
+  'Basic'
+  'Standard'
+  'Premium'
+])
+param skuName string = 'Standard'
+
+@description('An array specifying the names of topics that should be deployed.')
 param topicNames array = [
   'todo1'
   'todo2'
@@ -50,17 +55,15 @@ resource deadLetterFirehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01
 }
 
 // Topics for each message type.
-resource[] topics 'Microsoft.ServiceBus/namespaces/topics@2018-01-01-preview' = [for topicName in topicNames: {
+resource topics 'Microsoft.ServiceBus/namespaces/topics@2018-01-01-preview' = [for topicName in topicNames: {
   name: '${namespace.name}/${topicName}'
-  properties: {
-  }
 }]
 
 // Subscription to forward a copy of every message to the firehose queue.
-resource[] topicsSubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
+resource topicsSubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
   name: '${namespace.name}/${topicName}/${firehoseSubscriptionName}'
   dependsOn: [
-    firehoseQueue
+    firehoseQueue // This requires an explicitly dependency because the firehoseQueue.name property is a multipart name, which isn't accepted by the forwardTo property.
   ]
   properties: {
     forwardTo: firehoseQueueName
@@ -68,10 +71,10 @@ resource[] topicsSubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/su
 }]
 
 // Subscription for the primary processing of the messages coming into the topic, with dead-lettered messages automatically forwarded to the dead-letter firehose queue.
-resource[] topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
+resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2018-01-01-preview' = [for topicName in topicNames: {
   name: '${namespace.name}/${topicName}/${processSubscriptionName}'
   dependsOn: [
-    deadLetterFirehoseQueue
+    deadLetterFirehoseQueue // This requires an explicitly dependency because the deadLetterFirehoseQueue.name property is a multipart name, which isn't accepted by the forwardDeadLetteredMessagesTo property.
   ]
   properties: {
     forwardDeadLetteredMessagesTo: deadLetterFirehoseQueueName
