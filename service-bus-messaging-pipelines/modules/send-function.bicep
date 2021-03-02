@@ -11,8 +11,6 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' existing = {
   name: functionAppName
 }
 
-// TODO combine the below - this will probably require constructing a binding dynamically, which will require variable loops
-
 resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for serviceBusTopicFunction in serviceBusTopicFunctions: {
   name: '${functionApp.name}/${serviceBusTopicFunction.functionName}'
   properties: {
@@ -55,7 +53,7 @@ resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
             log.LogInformation("C# HTTP trigger function processed a request.");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             
-            outputMessage.Add(requestBody);
+            await outputMessage.AddAsync(requestBody);
             return new OkObjectResult("Sent message to topic.");
         }
       '''

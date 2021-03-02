@@ -29,6 +29,13 @@ resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
           queueName: serviceBusQueueFunction.queueName
           connection: serviceBusConnectionAppSettingName
         }
+        {
+          name: 'blobOutput'
+          type: 'blob'
+          direction: 'out'
+          path: 'todocontainer/{DateTime}'
+          connection: 'AzureWebJobsStorage' // TODO
+        }
       ]
     }
     files: {
@@ -40,13 +47,13 @@ resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
             Int32 deliveryCount,
             DateTime enqueuedTimeUtc,
             string messageId,
-            TraceWriter log)
+            TraceWriter log,
+            out string blobOutput)
         {
             log.Info($"C# Service Bus trigger function processed message: {message}");
-        
-            log.Info($"EnqueuedTimeUtc={enqueuedTimeUtc}");
-            log.Info($"DeliveryCount={deliveryCount}");
-            log.Info($"MessageId={messageId}");
+
+            // TODO wrap in a JSON object?
+            blobOutput = message;
         }
       '''
     }
