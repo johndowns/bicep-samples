@@ -1,0 +1,568 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The region into which the resources should be deployed."
+      }
+    },
+    "serviceBusNamespaceName": {
+      "type": "string",
+      "defaultValue": "[format('sb-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Service Bus namespace to deploy. This must be globally unique."
+      }
+    },
+    "serviceBusSkuName": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "The SKU of Service Bus to deploy."
+      }
+    },
+    "serviceBusTopicNames": {
+      "type": "array",
+      "defaultValue": [
+        "todo1",
+        "todo2"
+      ],
+      "metadata": {
+        "description": "An array specifying the names of topics that should be deployed."
+      }
+    },
+    "functionAppName": {
+      "type": "string",
+      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Functions application to create. This must be globally unique."
+      }
+    },
+    "functionPlanSkuName": {
+      "type": "string",
+      "defaultValue": "Y1",
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "serviceBus",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namespaceName": {
+            "value": "[parameters('serviceBusNamespaceName')]"
+          },
+          "skuName": {
+            "value": "[parameters('serviceBusSkuName')]"
+          },
+          "topicNames": {
+            "value": "[parameters('serviceBusTopicNames')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The region into which the Service Bus resources should be deployed."
+              }
+            },
+            "namespaceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Service Bus namespace to deploy. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Basic",
+                "Standard",
+                "Premium"
+              ],
+              "metadata": {
+                "description": "The SKU of Service Bus to deploy."
+              }
+            },
+            "topicNames": {
+              "type": "array",
+              "metadata": {
+                "description": "An array specifying the names of topics that should be deployed."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "listenAuthorizationRuleName": "FunctionListen",
+            "firehoseQueueName": "firehose",
+            "firehoseSubscriptionName": "firehose",
+            "deadLetterFirehoseQueueName": "deadletteredfirehose",
+            "processSubscriptionName": "process"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ServiceBus/namespaces",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[parameters('namespaceName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "zoneRedundant": "[equals(parameters('skuName'), 'Premium')]"
+              }
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('namespaceName'), variables('listenAuthorizationRuleName'))]",
+              "properties": {
+                "rights": [
+                  "Listen"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/queues",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('namespaceName'), variables('firehoseQueueName'))]",
+              "properties": {
+                "requiresDuplicateDetection": false,
+                "requiresSession": false,
+                "enablePartitioning": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/queues",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('namespaceName'), variables('deadLetterFirehoseQueueName'))]",
+              "properties": {
+                "requiresDuplicateDetection": false,
+                "requiresSession": false,
+                "enablePartitioning": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "topics",
+                "count": "[length(parameters('topicNames'))]"
+              },
+              "type": "Microsoft.ServiceBus/namespaces/topics",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('namespaceName'), parameters('topicNames')[copyIndex()])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "topicsSubscriptionFirehose",
+                "count": "[length(parameters('topicNames'))]"
+              },
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('namespaceName'), parameters('topicNames')[copyIndex()], variables('firehoseSubscriptionName'))]",
+              "properties": {
+                "forwardTo": "[variables('firehoseQueueName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', split(format('{0}/{1}', parameters('namespaceName'), variables('firehoseQueueName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), variables('firehoseQueueName')), '/')[1])]",
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "topicsSubscriptionProcess",
+                "count": "[length(parameters('topicNames'))]"
+              },
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('namespaceName'), parameters('topicNames')[copyIndex()], variables('processSubscriptionName'))]",
+              "properties": {
+                "forwardDeadLetteredMessagesTo": "[variables('deadLetterFirehoseQueueName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', split(format('{0}/{1}', parameters('namespaceName'), variables('deadLetterFirehoseQueueName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), variables('deadLetterFirehoseQueueName')), '/')[1])]",
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "serviceBusReaderConnectionString": {
+              "type": "string",
+              "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules', split(format('{0}/{1}', parameters('namespaceName'), variables('listenAuthorizationRuleName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), variables('listenAuthorizationRuleName')), '/')[1]), '2018-01-01-preview').primaryKey]"
+            },
+            "firehoseQueueName": {
+              "type": "string",
+              "value": "[variables('firehoseQueueName')]"
+            },
+            "deadLetterFirehoseQueueName": {
+              "type": "string",
+              "value": "[variables('deadLetterFirehoseQueueName')]"
+            },
+            "processSubscriptionName": {
+              "type": "string",
+              "value": "[variables('processSubscriptionName')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "functionApp",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "functionPlanSkuName": {
+            "value": "[parameters('functionPlanSkuName')]"
+          },
+          "appName": {
+            "value": "[parameters('functionAppName')]"
+          },
+          "serviceBusConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.serviceBusReaderConnectionString.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Azure Functions resources should be deployed."
+              }
+            },
+            "appName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Functions application to create. This must be globally unique."
+              }
+            },
+            "functionRuntime": {
+              "type": "string",
+              "defaultValue": "dotnet",
+              "metadata": {
+                "description": "The runtime to deploy onto the Azure Functions application."
+              }
+            },
+            "functionPlanSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
+              }
+            },
+            "serviceBusConnectionString": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The Service Bus connection string to use when receiving messages."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appServicePlanName": "FunctionPlan",
+            "appInsightsName": "AppInsights",
+            "storageAccountName": "[format('fnstor{0}', uniqueString(resourceGroup().id, parameters('appName')))]",
+            "functionPlanKind": "[if(equals(parameters('functionPlanSkuName'), 'Y1'), 'functionapp', 'elastic')]",
+            "serviceBusConnectionAppSettingName": "ServiceBusConnection"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                  "services": {
+                    "file": {
+                      "keyType": "Account",
+                      "enabled": true
+                    },
+                    "blob": {
+                      "keyType": "Account",
+                      "enabled": true
+                    }
+                  },
+                  "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2018-05-01-preview",
+              "name": "[variables('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "[variables('functionPlanKind')]",
+              "sku": {
+                "name": "[parameters('functionPlanSkuName')]"
+              },
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey)]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "[parameters('functionRuntime')]"
+                    },
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~3"
+                    },
+                    {
+                      "name": "AzureWebJobsDisableHomepage",
+                      "value": "true"
+                    },
+                    {
+                      "name": "[variables('serviceBusConnectionAppSettingName')]",
+                      "value": "[parameters('serviceBusConnectionString')]"
+                    }
+                  ]
+                },
+                "httpsOnly": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "serviceBusConnectionAppSettingName": {
+              "type": "string",
+              "value": "[variables('serviceBusConnectionAppSettingName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'serviceBus')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "functions",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "functionAppName": {
+            "value": "[parameters('functionAppName')]"
+          },
+          "serviceBusConnectionAppSettingName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'functionApp'), '2019-10-01').outputs.serviceBusConnectionAppSettingName.value]"
+          },
+          "serviceBusQueueFunctions": {
+            "value": [
+              {
+                "queueName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.deadLetterFirehoseQueueName.value]",
+                "functionName": "ProcessDeadLetterFirehoseQueueMessage"
+              },
+              {
+                "queueName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.firehoseQueueName.value]",
+                "functionName": "ProcessFirehoseQueueMessage"
+              }
+            ]
+          },
+          "serviceBusTopicSubscriptions": {
+            "value": [
+              {
+                "topicName": "todo1",
+                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]"
+              },
+              {
+                "topicName": "todo2",
+                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]"
+              }
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "functionAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Functions application to create. This must be globally unique."
+              }
+            },
+            "serviceBusConnectionAppSettingName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Service Bus connection string app setting."
+              }
+            },
+            "serviceBusQueueFunctions": {
+              "type": "array",
+              "metadata": {
+                "description": "The list of queue-triggered functions to create."
+              }
+            },
+            "serviceBusTopicSubscriptions": {
+              "type": "array",
+              "metadata": {
+                "description": "The list of topic-triggered functions to create."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "copy": {
+                "name": "queueFunction",
+                "count": "[length(parameters('serviceBusQueueFunctions'))]"
+              },
+              "type": "Microsoft.Web/sites/functions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), parameters('serviceBusQueueFunctions')[copyIndex()].functionName)]",
+              "properties": {
+                "config": {
+                  "disabled": false,
+                  "bindings": [
+                    {
+                      "name": "message",
+                      "type": "serviceBusTrigger",
+                      "direction": "in",
+                      "queueName": "[parameters('serviceBusQueueFunctions')[copyIndex()].queueName]",
+                      "connection": "[parameters('serviceBusConnectionAppSettingName')]"
+                    }
+                  ]
+                },
+                "files": {
+                  "run.csx": "        using System;\n\n        public static void Run(\n            string message,\n            Int32 deliveryCount,\n            DateTime enqueuedTimeUtc,\n            string messageId,\n            TraceWriter log)\n        {\n            log.Info($\"C# Service Bus trigger function processed message: {message}\");\n        \n            log.Info($\"EnqueuedTimeUtc={enqueuedTimeUtc}\");\n            log.Info($\"DeliveryCount={deliveryCount}\");\n            log.Info($\"MessageId={messageId}\");\n        }\n      "
+                }
+              },
+              "dependsOn": []
+            },
+            {
+              "copy": {
+                "name": "topicFunction",
+                "count": "[length(parameters('serviceBusTopicSubscriptions'))]"
+              },
+              "type": "Microsoft.Web/sites/functions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), parameters('serviceBusTopicSubscriptions')[copyIndex()].functionName)]",
+              "properties": {
+                "config": {
+                  "disabled": false,
+                  "bindings": [
+                    {
+                      "name": "message",
+                      "type": "serviceBusTrigger",
+                      "direction": "in",
+                      "topicName": "[parameters('serviceBusTopicSubscriptions')[copyIndex()].topicName]",
+                      "subscriptionName": "[parameters('serviceBusTopicSubscriptions')[copyIndex()].subscriptionName]",
+                      "connection": "[parameters('serviceBusConnectionAppSettingName')]"
+                    }
+                  ]
+                },
+                "files": {
+                  "run.csx": "        using System;\n\n        public static void Run(\n            string message,\n            Int32 deliveryCount,\n            DateTime enqueuedTimeUtc,\n            string messageId,\n            TraceWriter log)\n        {\n            log.Info($\"C# Service Bus trigger function processed message: {message}\");\n        \n            log.Info($\"EnqueuedTimeUtc={enqueuedTimeUtc}\");\n            log.Info($\"DeliveryCount={deliveryCount}\");\n            log.Info($\"MessageId={messageId}\");\n        }\n      "
+                }
+              },
+              "dependsOn": []
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'functionApp')]",
+        "[resourceId('Microsoft.Resources/deployments', 'serviceBus')]"
+      ]
+    }
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "2868304392586616835"
+    }
+  }
+}

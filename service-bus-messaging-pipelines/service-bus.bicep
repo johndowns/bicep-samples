@@ -1,8 +1,8 @@
 @description('The region into which the Service Bus resources should be deployed.')
-param location string = resourceGroup().location
+param location string
 
 @description('The name of the Service Bus namespace to deploy. This must be globally unique.')
-param namespaceName string = 'sb-${uniqueString(resourceGroup().id)}'
+param namespaceName string
 
 @description('The SKU of Service Bus to deploy.')
 @allowed([
@@ -10,14 +10,12 @@ param namespaceName string = 'sb-${uniqueString(resourceGroup().id)}'
   'Standard'
   'Premium'
 ])
-param skuName string = 'Standard'
+param skuName string
 
 @description('An array specifying the names of topics that should be deployed.')
-param topicNames array = [
-  'todo1'
-  'todo2'
-]
+param topicNames array
 
+var listenAuthorizationRuleName = 'FunctionListen'
 var firehoseQueueName = 'firehose'
 var firehoseSubscriptionName = 'firehose'
 var deadLetterFirehoseQueueName = 'deadletteredfirehose'
@@ -31,6 +29,15 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview' = {
   }
   properties:{
     zoneRedundant: (skuName == 'Premium')
+  }
+}
+
+resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
+  name: '${namespace.name}/${listenAuthorizationRuleName}'
+  properties: {
+    rights: [
+      'Listen'
+    ]
   }
 }
 
@@ -80,3 +87,8 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
     forwardDeadLetteredMessagesTo: deadLetterFirehoseQueueName
   }
 }]
+
+output serviceBusReaderConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryKey
+output firehoseQueueName string = firehoseQueueName
+output deadLetterFirehoseQueueName string = deadLetterFirehoseQueueName
+output processSubscriptionName string = processSubscriptionName
