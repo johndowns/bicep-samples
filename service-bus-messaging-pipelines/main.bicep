@@ -18,13 +18,16 @@ param serviceBusTopicNames array = [
   'todo2'
 ]
 
-@description('The name of the Azure Functions application to create. This must be globally unique.')
-param functionAppName string = 'fn-${uniqueString(resourceGroup().id)}'
+@description('The name of the Azure Functions application to create for send messages. This must be globally unique.')
+param sendFunctionAppName string = 'fn-send-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the Azure Functions application to create for listening to messages. This must be globally unique.')
+param listenFunctionAppName string = 'fn-listen-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
 param functionPlanSkuName string = 'Y1'
 
-module serviceBus 'service-bus.bicep' = {
+module serviceBus 'modules/service-bus.bicep' = {
   name: 'serviceBus'
   params: {
     location: location
@@ -34,21 +37,31 @@ module serviceBus 'service-bus.bicep' = {
   }
 }
 
-module functionApp 'function-app.bicep' = {
-  name: 'functionApp'
+module sendFunctionApp 'modules/function-app.bicep' = {
+  name: 'sendFunctionApp'
   params: {
     location: location
     functionPlanSkuName: functionPlanSkuName
-    appName: functionAppName
-    serviceBusConnectionString: serviceBus.outputs.serviceBusReaderConnectionString
+    appName: sendFunctionAppName
+    serviceBusConnectionString: serviceBus.outputs.serviceBusSendConnectionString
   }
 }
 
-module functions 'functions.bicep' = {
-  name: 'functions'
+module listenFunctionApp 'modules/function-app.bicep' = {
+  name: 'listenFunctionApp'
   params: {
-    functionAppName: functionAppName
-    serviceBusConnectionAppSettingName: functionApp.outputs.serviceBusConnectionAppSettingName
+    location: location
+    functionPlanSkuName: functionPlanSkuName
+    appName: listenFunctionAppName
+    serviceBusConnectionString: serviceBus.outputs.serviceBusListenConnectionString
+  }
+}
+
+module listenFunctions 'modules/listen-functions.bicep' = {
+  name: 'listenFunctions'
+  params: {
+    functionAppName: listenFunctionAppName
+    serviceBusConnectionAppSettingName: listenFunctionApp.outputs.serviceBusConnectionAppSettingName
     serviceBusQueueFunctions: [
       {
         queueName: serviceBus.outputs.deadLetterFirehoseQueueName
@@ -63,10 +76,32 @@ module functions 'functions.bicep' = {
       {
         topicName: 'todo1'
         subscriptionName: serviceBus.outputs.processSubscriptionName
+        functionName: 'ProcessTodo1TopicMessage'
       }
       {
         topicName: 'todo2'
         subscriptionName: serviceBus.outputs.processSubscriptionName
+        functionName: 'ProcessTodo2TopicMessage'
+      }
+    ]
+  }
+}
+
+// TODO add send function
+
+module sendFunction 'modules/send-function.bicep' = {
+  name: 'sendFunction'
+  params: {
+    functionAppName: sendFunctionAppName
+    serviceBusConnectionAppSettingName: listenFunctionApp.outputs.serviceBusConnectionAppSettingName
+    serviceBusTopicFunctions: [ // TODO move to variable loop based on parameter
+      {
+        topicName: 'todo1'
+        functionName: 'SendTodo1TopicMessage'
+      }
+      {
+        topicName: 'todo2'
+        functionName: 'SendTodo2TopicMessage'
       }
     ]
   }

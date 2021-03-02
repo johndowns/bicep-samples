@@ -1,4 +1,4 @@
-@description('The name of the Azure Functions application to create. This must be globally unique.')
+@description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
 param functionAppName string
 
 @description('The name of the Service Bus connection string app setting.')

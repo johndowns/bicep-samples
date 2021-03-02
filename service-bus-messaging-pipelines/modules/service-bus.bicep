@@ -16,6 +16,7 @@ param skuName string
 param topicNames array
 
 var listenAuthorizationRuleName = 'FunctionListen'
+var sendAuthorizationRuleName = 'FunctionSend'
 var firehoseQueueName = 'firehose'
 var firehoseSubscriptionName = 'firehose'
 var deadLetterFirehoseQueueName = 'deadletteredfirehose'
@@ -37,6 +38,15 @@ resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationR
   properties: {
     rights: [
       'Listen'
+    ]
+  }
+}
+
+resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
+  name: '${namespace.name}/${sendAuthorizationRuleName}'
+  properties: {
+    rights: [
+      'Send'
     ]
   }
 }
@@ -88,7 +98,8 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   }
 }]
 
-output serviceBusReaderConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryKey
+output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryKey
+output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryKey
 output firehoseQueueName string = firehoseQueueName
 output deadLetterFirehoseQueueName string = deadLetterFirehoseQueueName
 output processSubscriptionName string = processSubscriptionName

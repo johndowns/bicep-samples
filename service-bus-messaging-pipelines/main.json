@@ -38,11 +38,18 @@
         "description": "An array specifying the names of topics that should be deployed."
       }
     },
-    "functionAppName": {
+    "sendFunctionAppName": {
       "type": "string",
-      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('fn-send-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description": "The name of the Azure Functions application to create. This must be globally unique."
+        "description": "The name of the Azure Functions application to create for send messages. This must be globally unique."
+      }
+    },
+    "listenFunctionAppName": {
+      "type": "string",
+      "defaultValue": "[format('fn-listen-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Functions application to create for listening to messages. This must be globally unique."
       }
     },
     "functionPlanSkuName": {
@@ -115,6 +122,7 @@
           "functions": [],
           "variables": {
             "listenAuthorizationRuleName": "FunctionListen",
+            "sendAuthorizationRuleName": "FunctionSend",
             "firehoseQueueName": "firehose",
             "firehoseSubscriptionName": "firehose",
             "deadLetterFirehoseQueueName": "deadletteredfirehose",
@@ -140,6 +148,19 @@
               "properties": {
                 "rights": [
                   "Listen"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+              "apiVersion": "2018-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('namespaceName'), variables('sendAuthorizationRuleName'))]",
+              "properties": {
+                "rights": [
+                  "Send"
                 ]
               },
               "dependsOn": [
@@ -218,9 +239,13 @@
             }
           ],
           "outputs": {
-            "serviceBusReaderConnectionString": {
+            "serviceBusListenConnectionString": {
               "type": "string",
               "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules', split(format('{0}/{1}', parameters('namespaceName'), variables('listenAuthorizationRuleName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), variables('listenAuthorizationRuleName')), '/')[1]), '2018-01-01-preview').primaryKey]"
+            },
+            "serviceBusSendConnectionString": {
+              "type": "string",
+              "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules', split(format('{0}/{1}', parameters('namespaceName'), variables('sendAuthorizationRuleName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), variables('sendAuthorizationRuleName')), '/')[1]), '2018-01-01-preview').primaryKey]"
             },
             "firehoseQueueName": {
               "type": "string",
@@ -241,7 +266,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "functionApp",
+      "name": "sendFunctionApp",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -255,10 +280,10 @@
             "value": "[parameters('functionPlanSkuName')]"
           },
           "appName": {
-            "value": "[parameters('functionAppName')]"
+            "value": "[parameters('sendFunctionAppName')]"
           },
           "serviceBusConnectionString": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.serviceBusReaderConnectionString.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.serviceBusSendConnectionString.value]"
           }
         },
         "template": {
@@ -425,7 +450,191 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "functions",
+      "name": "listenFunctionApp",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "functionPlanSkuName": {
+            "value": "[parameters('functionPlanSkuName')]"
+          },
+          "appName": {
+            "value": "[parameters('listenFunctionAppName')]"
+          },
+          "serviceBusConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.serviceBusListenConnectionString.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Azure Functions resources should be deployed."
+              }
+            },
+            "appName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Functions application to create. This must be globally unique."
+              }
+            },
+            "functionRuntime": {
+              "type": "string",
+              "defaultValue": "dotnet",
+              "metadata": {
+                "description": "The runtime to deploy onto the Azure Functions application."
+              }
+            },
+            "functionPlanSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
+              }
+            },
+            "serviceBusConnectionString": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The Service Bus connection string to use when receiving messages."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appServicePlanName": "FunctionPlan",
+            "appInsightsName": "AppInsights",
+            "storageAccountName": "[format('fnstor{0}', uniqueString(resourceGroup().id, parameters('appName')))]",
+            "functionPlanKind": "[if(equals(parameters('functionPlanSkuName'), 'Y1'), 'functionapp', 'elastic')]",
+            "serviceBusConnectionAppSettingName": "ServiceBusConnection"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                  "services": {
+                    "file": {
+                      "keyType": "Account",
+                      "enabled": true
+                    },
+                    "blob": {
+                      "keyType": "Account",
+                      "enabled": true
+                    }
+                  },
+                  "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2018-05-01-preview",
+              "name": "[variables('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "[variables('functionPlanKind')]",
+              "sku": {
+                "name": "[parameters('functionPlanSkuName')]"
+              },
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey)]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "[parameters('functionRuntime')]"
+                    },
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~3"
+                    },
+                    {
+                      "name": "AzureWebJobsDisableHomepage",
+                      "value": "true"
+                    },
+                    {
+                      "name": "[variables('serviceBusConnectionAppSettingName')]",
+                      "value": "[parameters('serviceBusConnectionString')]"
+                    }
+                  ]
+                },
+                "httpsOnly": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "serviceBusConnectionAppSettingName": {
+              "type": "string",
+              "value": "[variables('serviceBusConnectionAppSettingName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'serviceBus')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "listenFunctions",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -433,10 +642,10 @@
         "mode": "Incremental",
         "parameters": {
           "functionAppName": {
-            "value": "[parameters('functionAppName')]"
+            "value": "[parameters('listenFunctionAppName')]"
           },
           "serviceBusConnectionAppSettingName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'functionApp'), '2019-10-01').outputs.serviceBusConnectionAppSettingName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'listenFunctionApp'), '2019-10-01').outputs.serviceBusConnectionAppSettingName.value]"
           },
           "serviceBusQueueFunctions": {
             "value": [
@@ -454,11 +663,13 @@
             "value": [
               {
                 "topicName": "todo1",
-                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]"
+                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]",
+                "functionName": "ProcessTodo1TopicMessage"
               },
               {
                 "topicName": "todo2",
-                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]"
+                "subscriptionName": "[reference(resourceId('Microsoft.Resources/deployments', 'serviceBus'), '2019-10-01').outputs.processSubscriptionName.value]",
+                "functionName": "ProcessTodo2TopicMessage"
               }
             ]
           }
@@ -470,7 +681,7 @@
             "functionAppName": {
               "type": "string",
               "metadata": {
-                "description": "The name of the Azure Functions application to create. This must be globally unique."
+                "description": "The name of the Azure Functions application in which to create the functions. This must be globally unique."
               }
             },
             "serviceBusConnectionAppSettingName": {
@@ -553,8 +764,110 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'functionApp')]",
+        "[resourceId('Microsoft.Resources/deployments', 'listenFunctionApp')]",
         "[resourceId('Microsoft.Resources/deployments', 'serviceBus')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "sendFunction",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "functionAppName": {
+            "value": "[parameters('sendFunctionAppName')]"
+          },
+          "serviceBusConnectionAppSettingName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'listenFunctionApp'), '2019-10-01').outputs.serviceBusConnectionAppSettingName.value]"
+          },
+          "serviceBusTopicFunctions": {
+            "value": [
+              {
+                "topicName": "todo1",
+                "functionName": "SendTodo1TopicMessage"
+              },
+              {
+                "topicName": "todo2",
+                "functionName": "SendTodo2TopicMessage"
+              }
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "functionAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Functions application in which to create the function. This must be globally unique."
+              }
+            },
+            "serviceBusConnectionAppSettingName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Service Bus connection string app setting."
+              }
+            },
+            "serviceBusTopicFunctions": {
+              "type": "array",
+              "metadata": {
+                "description": "The list of topics, for which each will have a send function created."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "copy": {
+                "name": "queueFunction",
+                "count": "[length(parameters('serviceBusTopicFunctions'))]"
+              },
+              "type": "Microsoft.Web/sites/functions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), parameters('serviceBusTopicFunctions')[copyIndex()].functionName)]",
+              "properties": {
+                "config": {
+                  "disabled": false,
+                  "bindings": [
+                    {
+                      "name": "req",
+                      "type": "httpTrigger",
+                      "direction": "in",
+                      "authLevel": "anonymous",
+                      "methods": [
+                        "post"
+                      ]
+                    },
+                    {
+                      "name": "$return",
+                      "type": "http",
+                      "direction": "out"
+                    },
+                    {
+                      "name": "outputMessage",
+                      "type": "serviceBus",
+                      "topicName": "[parameters('serviceBusTopicFunctions')[copyIndex()].topicName]",
+                      "connection": "[parameters('serviceBusConnectionAppSettingName')]",
+                      "direction": "out"
+                    }
+                  ]
+                },
+                "files": {
+                  "run.csx": "        #r \"Newtonsoft.Json\"\n        using System.Net;\n        using Microsoft.AspNetCore.Mvc;\n        using Microsoft.Extensions.Primitives;\n        using Newtonsoft.Json;\n\n        public static async Task<IActionResult> Run(HttpRequest req, ILogger log, IAsyncCollector<string> outputMessage)\n        {\n            log.LogInformation(\"C# HTTP trigger function processed a request.\");\n            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();\n            \n            outputMessage.Add(requestBody);\n            return new OkObjectResult(\"Sent message to topic.\");\n        }\n      "
+                }
+              },
+              "dependsOn": []
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'listenFunctionApp')]"
       ]
     }
   ],
@@ -562,7 +875,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.1.62928",
-      "templateHash": "2868304392586616835"
+      "templateHash": "6492000638952948078"
     }
   }
 }
