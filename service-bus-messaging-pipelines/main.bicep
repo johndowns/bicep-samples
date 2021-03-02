@@ -21,8 +21,26 @@ param serviceBusTopicNames array = [
 @description('The name of the Azure Functions application to create for send messages. This must be globally unique.')
 param sendFunctionAppName string = 'fn-send-${uniqueString(resourceGroup().id)}'
 
+@description('TODO')
+param sendFunctionPlanName string = 'Send-Plan'
+
+@description('TODO')
+param sendFunctionStorageAccountName string = 'fnstorsend${uniqueString(resourceGroup().id)}'
+
+@description('TODO')
+param sendFunctionApplicationInsightsName string = 'Send-ApplicationInsights'
+
 @description('The name of the Azure Functions application to create for listening to messages. This must be globally unique.')
 param listenFunctionAppName string = 'fn-listen-${uniqueString(resourceGroup().id)}'
+
+@description('TODO')
+param listenFunctionPlanName string = 'Listen-Plan'
+
+@description('TODO')
+param listenFunctionStorageAccountName string = 'fnstorlist${uniqueString(resourceGroup().id)}'
+
+@description('TODO')
+param listenFunctionApplicationInsightsName string = 'Listen-ApplicationInsights'
 
 @description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
 param functionPlanSkuName string = 'Y1'
@@ -42,6 +60,9 @@ module sendFunctionApp 'modules/function-app.bicep' = {
   params: {
     location: location
     functionPlanSkuName: functionPlanSkuName
+    functionPlanName: sendFunctionPlanName
+    appInsightsName: sendFunctionApplicationInsightsName
+    storageAccountName: sendFunctionStorageAccountName
     appName: sendFunctionAppName
     serviceBusConnectionString: serviceBus.outputs.serviceBusSendConnectionString
   }
@@ -52,6 +73,9 @@ module listenFunctionApp 'modules/function-app.bicep' = {
   params: {
     location: location
     functionPlanSkuName: functionPlanSkuName
+    functionPlanName: listenFunctionPlanName
+    appInsightsName: listenFunctionApplicationInsightsName
+    storageAccountName: listenFunctionStorageAccountName
     appName: listenFunctionAppName
     serviceBusConnectionString: serviceBus.outputs.serviceBusListenConnectionString
   }
