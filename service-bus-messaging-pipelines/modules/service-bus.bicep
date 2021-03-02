@@ -33,7 +33,7 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview' = {
   }
 }
 
-resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
+resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2017-04-01' = {
   name: '${namespace.name}/${listenAuthorizationRuleName}'
   properties: {
     rights: [
@@ -42,7 +42,7 @@ resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationR
   }
 }
 
-resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
+resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2017-04-01' = {
   name: '${namespace.name}/${sendAuthorizationRuleName}'
   properties: {
     rights: [
@@ -98,8 +98,8 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   }
 }]
 
-output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryKey
-output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryKey
+output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryConnectionString
+output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryConnectionString
 output firehoseQueueName string = firehoseQueueName
 output deadLetterFirehoseQueueName string = deadLetterFirehoseQueueName
 output processSubscriptionName string = processSubscriptionName
