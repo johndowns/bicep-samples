@@ -3,17 +3,29 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "eventGridTopicName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Event Grid custom topic."
+      }
     },
     "eventGridSubscriptionName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Event Grid custom topic's subscription."
+      }
     },
     "eventGridSubscriptionUrl": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The webhook URL to send the subscription events to. This URL must be valid and must be prepared to accept the Event Grid webhook URL challenge request."
+      }
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]"
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location in which the Event Grid resources should be deployed."
+      }
     }
   },
   "functions": [],
@@ -21,32 +33,32 @@
     {
       "type": "Microsoft.EventGrid/topics",
       "apiVersion": "2020-06-01",
-      "location": "[parameters('location')]",
       "name": "[parameters('eventGridTopicName')]",
-      "properties": {}
+      "location": "[parameters('location')]"
     },
     {
-      "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
+      "type": "Microsoft.EventGrid/eventSubscriptions",
       "apiVersion": "2020-06-01",
       "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('eventGridTopicName'))]",
-      "location": "[parameters('location')]",
-      "name": "[format('{0}/Microsoft.EventGrid/{1}', parameters('eventGridTopicName'), parameters('eventGridSubscriptionName'))]",
+      "name": "[parameters('eventGridSubscriptionName')]",
       "properties": {
         "destination": {
-          "endpointType": "Webhook",
+          "endpointType": "WebHook",
           "properties": {
             "endpointUrl": "[parameters('eventGridSubscriptionUrl')]"
           }
-        },
-        "filter": {
-          "includedEventTypes": [
-            "All"
-          ]
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]"
       ]
     }
-  ]
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "13978682958940436444"
+    }
+  }
 }

@@ -1,3 +1,3 @@
 # Event Grid topic and subscription webhook
 
-This example cannot be submitted to the Bicep examples repo currently because it uses a type not defined correctly, [as tracked on this Bicep issue](https://github.com/Azure/bicep/issues/784). These resource types deploy successfully but trigger a warning by the Bicep CLI.
+This example can now be merged into the quickstart repo: https://github.com/Azure/azure-quickstart-templates/blob/master/101-event-grid/
