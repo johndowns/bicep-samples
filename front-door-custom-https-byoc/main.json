@@ -133,7 +133,7 @@
     {
       "type": "Microsoft.Network/frontDoors/frontendEndpoints/customHttpsConfiguration",
       "apiVersion": "2020-07-01",
-      "name": "[format('{0}/{1}/default', parameters('frontDoorName'), variables('frontEndEndpointCustomName'))]",
+      "name": "[format('{0}/{1}/{2}', parameters('frontDoorName'), variables('frontEndEndpointCustomName'), 'default')]",
       "properties": {
         "protocolType": "ServerNameIndication",
         "certificateSource": "AzureKeyVault",
@@ -150,5 +150,12 @@
         "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]"
       ]
     }
-  ]
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.126.58533",
+      "templateHash": "2632732150887294999"
+    }
+  }
 }

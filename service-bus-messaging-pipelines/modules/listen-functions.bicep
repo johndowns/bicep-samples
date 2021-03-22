@@ -17,7 +17,8 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' existing = {
 // TODO combine the below - this will probably require constructing a binding dynamically, which will require variable loops
 
 resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for serviceBusQueueFunction in serviceBusQueueFunctions: {
-  name: '${functionApp.name}/${serviceBusQueueFunction.functionName}'
+  name: serviceBusQueueFunction.functionName
+  parent: functionApp
   properties: {
     config: {
       disabled: false
@@ -54,7 +55,8 @@ resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
 }]
 
 resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for serviceBusTopicSubscription in serviceBusTopicSubscriptions: {
-  name: '${functionApp.name}/${serviceBusTopicSubscription.functionName}'
+  name: serviceBusTopicSubscription.functionName
+  parent: functionApp
   properties: {
     config: {
       disabled: false

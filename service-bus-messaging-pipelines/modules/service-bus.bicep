@@ -34,7 +34,8 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview' = {
 }
 
 resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
-  name: '${namespace.name}/${listenAuthorizationRuleName}'
+  name: listenAuthorizationRuleName
+  parent: namespace
   properties: {
     rights: [
       'Listen'
@@ -43,7 +44,8 @@ resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationR
 }
 
 resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
-  name: '${namespace.name}/${sendAuthorizationRuleName}'
+  name: sendAuthorizationRuleName
+  parent: namespace
   properties: {
     rights: [
       'Send'
@@ -53,7 +55,8 @@ resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRul
 
 // Queue to receive a copy of every message on every topic.
 resource firehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01-01-preview' = {
-  name: '${namespace.name}/${firehoseQueueName}'
+  name: firehoseQueueName
+  parent: namespace
   properties: {
     requiresDuplicateDetection: false
     requiresSession: false
@@ -63,7 +66,8 @@ resource firehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01-01-previe
 
 // Queue to receive all dead-lettered messages on the 'process' subscriptions on every topic.
 resource deadLetterFirehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01-01-preview' = {
-  name: '${namespace.name}/${deadLetterFirehoseQueueName}'
+  name: deadLetterFirehoseQueueName
+  parent: namespace
   properties: {
     requiresDuplicateDetection: false
     requiresSession: false
@@ -73,7 +77,8 @@ resource deadLetterFirehoseQueue 'Microsoft.ServiceBus/namespaces/queues@2018-01
 
 // Topics for each message type.
 resource topics 'Microsoft.ServiceBus/namespaces/topics@2018-01-01-preview' = [for topicName in topicNames: {
-  name: '${namespace.name}/${topicName}'
+  name: topicName
+  parent: namespace
 }]
 
 // Subscription to forward a copy of every message to the firehose queue.
@@ -81,6 +86,7 @@ resource topicsSubscriptionFirehose 'Microsoft.ServiceBus/namespaces/topics/subs
   name: '${namespace.name}/${topicName}/${firehoseSubscriptionName}'
   dependsOn: [
     firehoseQueue // This requires an explicitly dependency because the firehoseQueue.name property is a multipart name, which isn't accepted by the forwardTo property.
+    topics
   ]
   properties: {
     forwardTo: firehoseQueueName
@@ -92,6 +98,7 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   name: '${namespace.name}/${topicName}/${processSubscriptionName}'
   dependsOn: [
     deadLetterFirehoseQueue // This requires an explicitly dependency because the deadLetterFirehoseQueue.name property is a multipart name, which isn't accepted by the forwardDeadLetteredMessagesTo property.
+    topics
   ]
   properties: {
     forwardDeadLetteredMessagesTo: deadLetterFirehoseQueueName
