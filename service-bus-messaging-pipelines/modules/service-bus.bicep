@@ -105,8 +105,8 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   }
 }]
 
-output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryKey
-output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryKey
+output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryConnectionString
+output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryConnectionString
 output firehoseQueueName string = firehoseQueueName
 output deadLetterFirehoseQueueName string = deadLetterFirehoseQueueName
 output processSubscriptionName string = processSubscriptionName

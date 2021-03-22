@@ -14,9 +14,15 @@ param functionPlanSkuName string
 @secure()
 param serviceBusConnectionString string
 
-var appServicePlanName = 'FunctionPlan'
-var appInsightsName = 'AppInsights'
-var storageAccountName = 'fnstor${uniqueString(resourceGroup().id, appName)}'
+@description('TODO')
+param functionPlanName string
+
+@description('TODO')
+param appInsightsName string
+
+@description('TODO')
+param storageAccountName string
+
 var functionPlanKind = (functionPlanSkuName == 'Y1') ? 'functionapp' : 'elastic'
 var serviceBusConnectionAppSettingName = 'ServiceBusConnection'
 
@@ -59,7 +65,7 @@ resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
 }
 
 resource functionPlan 'Microsoft.Web/serverFarms@2020-06-01' = {
-  name: appServicePlanName
+  name: functionPlanName
   location: location
   kind: functionPlanKind
   sku: {
