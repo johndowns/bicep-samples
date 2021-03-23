@@ -34,7 +34,6 @@ param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().i
 param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup().id, 'firehose')}'
 
 var appInsightsName = 'ServerlessMessagingDemo'
-var firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays = 365
 
 module serviceBusModule 'modules/service-bus.bicep' = {
   name: 'serviceBusModule'
@@ -88,7 +87,6 @@ module firehoseModule 'modules/firehose.bicep' = {
     functionAppName: firehoseFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
     firehoseStorageAccountName: firehoseStorageAccountName
-    firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays: firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays
     appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
     firehoseQueueName: serviceBusModule.outputs.firehoseQueueName

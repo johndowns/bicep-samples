@@ -19,6 +19,7 @@ param extraConfiguration object = {}
 
 var serviceBusConnectionAppSettingName = 'ServiceBusConnection'
 var functionRuntime = 'dotnet'
+var extraConfigurationArray = extraConfiguration == {} ? [] : array(extraConfiguration)
 
 resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' existing = {
   name: functionStorageAccountName
@@ -30,7 +31,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   kind: 'functionapp'
   properties: {
     siteConfig: {
-      appSettings: union(extraConfiguration == {} ? [] : array(extraConfiguration), [
+      appSettings: union(extraConfigurationArray, [
         {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${functionStorageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(functionStorageAccount.id, functionStorageAccount.apiVersion).keys[0].value}'
