@@ -21,7 +21,7 @@ param serviceBusTopicNames array
 param processSubscriptionName string
 
 // Create a function app.
-module processorFunctionAppModule 'function-app.bicep' = {
+module processorFunctionAppModule '../function-app.bicep' = {
   name: 'processorFunctionAppModule'
   params: {
     location: location

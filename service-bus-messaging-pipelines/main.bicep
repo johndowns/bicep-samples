@@ -66,7 +66,7 @@ module functionAppStorageAccountModule 'modules/storage.bicep' = {
 }
 
 // Deploy the resources for processing the primary queue messages.
-module processorsModule 'modules/processors.bicep' = {
+module processorsModule 'modules/processors/processors.bicep' = {
   name: 'processorsModule'
   params: {
     location: location
@@ -80,7 +80,7 @@ module processorsModule 'modules/processors.bicep' = {
 }
 
 // Deploy the resources for processing the firehose queue messages.
-module firehoseModule 'modules/firehose.bicep' = {
+module firehoseModule 'modules/firehose/firehose.bicep' = {
   name: 'firehoseModule'
   params: {
     location: location
@@ -94,7 +94,7 @@ module firehoseModule 'modules/firehose.bicep' = {
 }
 
 // Deploy the resources for processing the primary queue messages.
-module sendersModule 'modules/senders.bicep' = {
+module sendersModule 'modules/senders/senders.bicep' = {
   name: 'sendersModule'
   params: {
     location: location

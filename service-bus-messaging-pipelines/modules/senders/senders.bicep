@@ -18,7 +18,7 @@ param serviceBusConnectionString string
 param serviceBusTopicNames array
 
 // Create a function app.
-module senderFunctionAppModule 'function-app.bicep' = {
+module senderFunctionAppModule '../function-app.bicep' = {
   name: 'senderFunctionAppModule'
   params: {
     location: location

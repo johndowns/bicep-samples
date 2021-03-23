@@ -25,7 +25,7 @@ var containerImmutabilityPeriodSinceCreationInDays = 365
 var functionName = 'ProcessFirehoseQueueMessage'
 
 // Create a storage account and immutable container for storing the firehose messages.
-module firehoseStorageAccountModule 'firehose/storage.bicep' = {
+module firehoseStorageAccountModule 'storage.bicep' = {
   name: 'firehoseStorageAccountModule'
   params: {
     location: location
@@ -35,7 +35,7 @@ module firehoseStorageAccountModule 'firehose/storage.bicep' = {
   }
 }
 
-module firehoseFunctionMoule 'firehose/function.bicep' = {
+module firehoseFunctionMoule 'function.bicep' = {
   name: 'firehoseFunctionMoule'
   params: {
     location: location
