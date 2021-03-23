@@ -35,14 +35,18 @@ module firehoseStorageAccountModule 'storage.bicep' = {
   }
 }
 
-module firehoseFunctionMoule 'function.bicep' = {
-  name: 'firehoseFunctionMoule'
+// Create the function app and function to listen to the firehose queue and write the messages to the storage container.
+module firehoseFunctionModule 'function.bicep' = {
+  name: 'firehoseFunctionModule'
+  dependsOn: [
+    firehoseStorageAccountModule
+  ]
   params: {
     location: location
     functionAppName: functionAppName
     functionName: functionName
     functionStorageAccountName: functionStorageAccountName
-    firehoseStorageAccountName: firehoseStorageAccountModule.outputs.storageAccountName
+    firehoseStorageAccountName: firehoseStorageAccountName
     firehoseContainerName: containerName
     appInsightsInstrumentationKey: appInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString

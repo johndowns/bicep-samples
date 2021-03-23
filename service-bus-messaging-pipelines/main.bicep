@@ -33,6 +33,9 @@ param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().i
 @description('TODO')
 param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup().id, 'firehose')}'
 
+@description('TODO')
+param deadLetterFirehoseCosmosDBAccountName string = 'deadletter${uniqueString(resourceGroup().id, 'deadletter')}'
+
 var appInsightsName = 'ServerlessMessagingDemo'
 
 module serviceBusModule 'modules/service-bus.bicep' = {
@@ -86,10 +89,24 @@ module firehoseModule 'modules/firehose/firehose.bicep' = {
     location: location
     functionAppName: firehoseFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
-    firehoseStorageAccountName: firehoseStorageAccountName
     appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
     firehoseQueueName: serviceBusModule.outputs.firehoseQueueName
+    firehoseStorageAccountName: firehoseStorageAccountName    
+  }
+}
+
+// Deploy the resources for processing the dead-lettered firehose queue messages.
+module deadLetterFirehoseModule 'modules/deadLetterFirehose/deadLetterFirehose.bicep' = {
+  name: 'deadLetterFirehoseModule'
+  params: {
+    location: location
+    functionAppName: firehoseFunctionAppName
+    functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
+    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
+    deadLetterFirehoseQueueName: serviceBusModule.outputs.deadLetterFirehoseQueueName
+    deadLetterFirehoseCosmosDBAccountName: deadLetterFirehoseCosmosDBAccountName
   }
 }
 
