@@ -18,35 +18,26 @@ param serviceBusTopicNames array = [
   'todo2'
 ]
 
-@description('The name of the Azure Functions application to create for send messages. This must be globally unique.')
-param sendFunctionAppName string = 'fn-send-${uniqueString(resourceGroup().id)}'
-
 @description('TODO')
-param sendFunctionPlanName string = 'Send-Plan'
-
-@description('TODO')
-param sendFunctionStorageAccountName string = 'fnstorsend${uniqueString(resourceGroup().id)}'
-
-@description('TODO')
-param sendFunctionApplicationInsightsName string = 'Send-ApplicationInsights'
+param functionAppStorageAccountName string = 'fn${uniqueString(resourceGroup().id)}'
 
 @description('The name of the Azure Functions application to create for listening to messages. This must be globally unique.')
-param listenFunctionAppName string = 'fn-listen-${uniqueString(resourceGroup().id)}'
+param processorFunctionAppName string = 'fn-processor-${uniqueString(resourceGroup().id, 'processor')}'
 
 @description('TODO')
-param listenFunctionPlanName string = 'Listen-Plan'
+param firehoseFunctionAppName string = 'fn-firehose-${uniqueString(resourceGroup().id, 'firehose')}'
 
 @description('TODO')
-param listenFunctionStorageAccountName string = 'fnstorlist${uniqueString(resourceGroup().id)}'
+param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().id, 'sender')}'
 
 @description('TODO')
-param listenFunctionApplicationInsightsName string = 'Listen-ApplicationInsights'
+param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup().id, 'firehose')}'
 
-@description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
-param functionPlanSkuName string = 'Y1'
+var appInsightsName = 'ServerlessMessagingDemo'
+var firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays = 365
 
-module serviceBus 'modules/service-bus.bicep' = {
-  name: 'serviceBus'
+module serviceBusModule 'modules/service-bus.bicep' = {
+  name: 'serviceBusModule'
   params: {
     location: location
     namespaceName: serviceBusNamespaceName
@@ -55,78 +46,64 @@ module serviceBus 'modules/service-bus.bicep' = {
   }
 }
 
-module sendFunctionApp 'modules/function-app.bicep' = {
-  name: 'sendFunctionApp'
+// Deploy the shared Application Insights instance.
+
+module appInsightsModule 'modules/application-insights.bicep' = {
+  name: 'appInsightsModule'
   params: {
     location: location
-    functionPlanSkuName: functionPlanSkuName
-    functionPlanName: sendFunctionPlanName
-    appInsightsName: sendFunctionApplicationInsightsName
-    storageAccountName: sendFunctionStorageAccountName
-    appName: sendFunctionAppName
-    serviceBusConnectionString: serviceBus.outputs.serviceBusSendConnectionString
+    appInsightsName: appInsightsName
   }
 }
 
-module listenFunctionApp 'modules/function-app.bicep' = {
-  name: 'listenFunctionApp'
+// Deploy the shared Azure Storage account for all function apps to use for their metadata.
+
+module functionAppStorageAccountModule 'modules/storage.bicep' = {
+  name: 'functionAppStorageAccountModule'
   params: {
     location: location
-    functionPlanSkuName: functionPlanSkuName
-    functionPlanName: listenFunctionPlanName
-    appInsightsName: listenFunctionApplicationInsightsName
-    storageAccountName: listenFunctionStorageAccountName
-    appName: listenFunctionAppName
-    serviceBusConnectionString: serviceBus.outputs.serviceBusListenConnectionString
+    storageAccountName: functionAppStorageAccountName
   }
 }
 
-module listenFunctions 'modules/listen-functions.bicep' = {
-  name: 'listenFunctions'
+// Deploy the resources for processing the primary queue messages.
+module processorsModule 'modules/processors.bicep' = {
+  name: 'processorsModule'
   params: {
-    functionAppName: listenFunctionAppName
-    serviceBusConnectionAppSettingName: listenFunctionApp.outputs.serviceBusConnectionAppSettingName
-    serviceBusQueueFunctions: [
-      {
-        queueName: serviceBus.outputs.deadLetterFirehoseQueueName
-        functionName: 'ProcessDeadLetterFirehoseQueueMessage'
-      }
-      {
-        queueName: serviceBus.outputs.firehoseQueueName
-        functionName: 'ProcessFirehoseQueueMessage'
-      }
-    ]
-    serviceBusTopicSubscriptions: [ // TODO move to variable loop based on parameter
-      {
-        topicName: 'todo1'
-        subscriptionName: serviceBus.outputs.processSubscriptionName
-        functionName: 'ProcessTodo1TopicMessage'
-      }
-      {
-        topicName: 'todo2'
-        subscriptionName: serviceBus.outputs.processSubscriptionName
-        functionName: 'ProcessTodo2TopicMessage'
-      }
-    ]
+    location: location
+    functionAppName: processorFunctionAppName
+    functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
+    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    serviceBusConnectionString: serviceBusModule.outputs.processorConnectionString
+    serviceBusTopicNames: serviceBusTopicNames
+    processSubscriptionName: serviceBusModule.outputs.processSubscriptionName
   }
 }
 
-// TODO add send function
-
-module sendFunction 'modules/send-function.bicep' = {
-  name: 'sendFunction'
+// Deploy the resources for processing the firehose queue messages.
+module firehoseModule 'modules/firehose.bicep' = {
+  name: 'firehoseModule'
   params: {
-    functionAppName: sendFunctionAppName
-    serviceBusConnectionAppSettingName: listenFunctionApp.outputs.serviceBusConnectionAppSettingName
-    serviceBusTopicFunctions: [ // TODO move to variable loop based on parameter
-      {
-        topicName: 'todo1'
-        functionName: 'SendTodo1TopicMessage'
-      }
-      {
-        topicName: 'todo2'
-        functionName: 'SendTodo2TopicMessage'
-      }
-    ]
+    location: location
+    functionAppName: firehoseFunctionAppName
+    functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
+    firehoseStorageAccountName: firehoseStorageAccountName
+    firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays: firehoseStorageAccountContainerImmutabilityPeriodSinceCreationInDays
+    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
+    firehoseQueueName: serviceBusModule.outputs.firehoseQueueName
+  }
+}
+
+// Deploy the resources for processing the primary queue messages.
+module sendersModule 'modules/senders.bicep' = {
+  name: 'sendersModule'
+  params: {
+    location: location
+    functionAppName: senderFunctionAppName
+    functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
+    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    serviceBusConnectionString: serviceBusModule.outputs.senderConnectionString
+    serviceBusTopicNames: serviceBusTopicNames
   }
 }

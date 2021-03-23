@@ -1,18 +1,41 @@
-@description('The name of the Azure Functions application in which to create the function. This must be globally unique.')
+@description('TODO')
+param location string
+
+@description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
 param functionAppName string
 
-@description('The name of the Service Bus connection string app setting.')
-param serviceBusConnectionAppSettingName string
+@description('TODO')
+param functionStorageAccountName string
 
-@description('The list of topics, for which each will have a send function created.')
-param serviceBusTopicFunctions array
+@description('TODO')
+param appInsightsInstrumentationKey string
+
+@description('TODO')
+@secure()
+param serviceBusConnectionString string
+
+@description('The list of topic names to create functions for.')
+param serviceBusTopicNames array
+
+// Create a function app.
+module senderFunctionAppModule 'function-app.bicep' = {
+  name: 'senderFunctionAppModule'
+  params: {
+    location: location
+    appName: functionAppName
+    functionStorageAccountName: functionStorageAccountName
+    appInsightsInstrumentationKey: appInsightsInstrumentationKey
+    serviceBusConnectionString: serviceBusConnectionString
+  }
+}
 
 resource functionApp 'Microsoft.Web/sites@2020-06-01' existing = {
   name: functionAppName
 }
 
-resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for serviceBusTopicFunction in serviceBusTopicFunctions: {
-  name: serviceBusTopicFunction.functionName
+// Create a function for each topic subscription.
+resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for serviceBusTopicName in serviceBusTopicNames: {
+  name: 'Send-${serviceBusTopicName}'
   parent: functionApp
   properties: {
     config: {
@@ -35,8 +58,8 @@ resource queueFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
         {
           name: 'outputMessage'
           type: 'serviceBus'
-          topicName: serviceBusTopicFunction.topicName
-          connection: serviceBusConnectionAppSettingName
+          topicName: serviceBusTopicName
+          connection: senderFunctionAppModule.outputs.serviceBusConnectionAppSettingName
           direction: 'out'
         }
       ]

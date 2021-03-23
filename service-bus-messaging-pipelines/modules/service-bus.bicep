@@ -15,8 +15,9 @@ param skuName string
 @description('An array specifying the names of topics that should be deployed.')
 param topicNames array
 
-var listenAuthorizationRuleName = 'FunctionListen'
-var sendAuthorizationRuleName = 'FunctionSend'
+var processorAuthorizationRuleName = 'ProcessorFunction'
+var firehoseAuthorizationRuleName = 'FirehoseFunction'
+var senderAuthorizationRuleName = 'SenderFunction'
 var firehoseQueueName = 'firehose'
 var firehoseSubscriptionName = 'firehose'
 var deadLetterFirehoseQueueName = 'deadletteredfirehose'
@@ -33,8 +34,8 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview' = {
   }
 }
 
-resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
-  name: listenAuthorizationRuleName
+resource processorAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2017-04-01' = {
+  name: processorAuthorizationRuleName
   parent: namespace
   properties: {
     rights: [
@@ -43,8 +44,18 @@ resource listenAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationR
   }
 }
 
-resource sendAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2018-01-01-preview' = {
-  name: sendAuthorizationRuleName
+resource firehoseAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2017-04-01' = {
+  name: firehoseAuthorizationRuleName
+  parent: namespace
+  properties: {
+    rights: [
+      'Listen'
+    ]
+  }
+}
+
+resource senderAuthorizationRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2017-04-01' = {
+  name: senderAuthorizationRuleName
   parent: namespace
   properties: {
     rights: [
@@ -105,8 +116,9 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   }
 }]
 
-output serviceBusListenConnectionString string = listKeys(listenAuthorizationRule.id, listenAuthorizationRule.apiVersion).primaryConnectionString
-output serviceBusSendConnectionString string = listKeys(sendAuthorizationRule.id, sendAuthorizationRule.apiVersion).primaryConnectionString
+output processorConnectionString string = listKeys(processorAuthorizationRule.id, processorAuthorizationRule.apiVersion).primaryConnectionString
+output firehoseConnectionString string = listKeys(firehoseAuthorizationRule.id, firehoseAuthorizationRule.apiVersion).primaryConnectionString
+output senderConnectionString string = listKeys(senderAuthorizationRule.id, senderAuthorizationRule.apiVersion).primaryConnectionString
 output firehoseQueueName string = firehoseQueueName
 output deadLetterFirehoseQueueName string = deadLetterFirehoseQueueName
 output processSubscriptionName string = processSubscriptionName
