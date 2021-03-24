@@ -74,7 +74,7 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
           name: 'blobOutput'
           type: 'blob'
           direction: 'out'
-          path: '${firehoseContainerName}/y={enqueuedTimeUtc.Year}/m={enqueuedTimeUtc.Month}/d={enqueuedTimeUtc.Day}/h={enqueuedTimeUtc.Hour}/{messageId}.json'
+          path: '${firehoseContainerName}/y={enqueuedTimeUtc.Year}/m={enqueuedTimeUtc.Month}/d={enqueuedTimeUtc.Day}/h={enqueuedTimeUtc.Hour}/{enqueuedTimeUtc}-{messageId}.json'
           connection: firehoseStorageConnectionStringAppSettingName
         }
       ]

@@ -36,6 +36,10 @@ module deadLetterFirehoseCosmosDBModule 'cosmos-db.bicep' = {
   }
 }
 
+resource deadLetterFirehoseCosmosDBAccount 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' existing = {
+  name: deadLetterFirehoseCosmosDBAccountName
+}
+
 module deadLetterFirehoseFunctionModule 'function.bicep' = {
   name: 'deadLetterFirehoseFunctionModule'
   dependsOn: [
@@ -48,7 +52,7 @@ module deadLetterFirehoseFunctionModule 'function.bicep' = {
     deadLetterFirehoseCosmosDBAccountName: deadLetterFirehoseCosmosDBAccountName
     deadLetterFirehoseCosmosDBDatabaseName: databaseName
     deadLetterFirehoseCosmosDBContainerName: containerName
-    deadLetterFirehoseCosmosDBConnectionString: 'TODO'
+    deadLetterFirehoseCosmosDBConnectionString: listConnectionStrings(deadLetterFirehoseCosmosDBAccount.id, deadLetterFirehoseCosmosDBAccount.apiVersion).connectionStrings[0].connectionString
     applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
     deadLetterFirehoseQueueName: deadLetterFirehoseQueueName

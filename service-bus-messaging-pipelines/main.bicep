@@ -133,3 +133,5 @@ module sendersModule 'modules/senders/senders.bicep' = {
     serviceBusTopicNames: serviceBusTopicNames
   }
 }
+
+output senderFunctionsUrls array = sendersModule.outputs.functionsUrls
