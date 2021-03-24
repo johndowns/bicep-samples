@@ -1,11 +1,11 @@
 @description('The location into which the Application Insights resources should be deployed.')
 param location string
 
-@description('TODO')
-param appInsightsName string
+@description('The name of the Application Insights instance to deploy.')
+param applicationInsightsName string
 
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
-  name: appInsightsName
+resource applicationInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+  name: applicationInsightsName
   location: location
   kind: 'web'
   properties: {
@@ -15,4 +15,4 @@ resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
   }
 }
 
-output instrumentationKey string = appInsights.properties.InstrumentationKey
+output instrumentationKey string = applicationInsights.properties.InstrumentationKey

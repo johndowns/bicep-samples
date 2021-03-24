@@ -12,9 +12,9 @@ param serviceBusConnectionString string
 param functionStorageAccountName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
-param appInsightsInstrumentationKey string
+param applicationInsightsInstrumentationKey string
 
-@description('TODO')
+@description('Additional configuration settings that should be added to the App Service application settings.')
 param extraConfiguration object = {}
 
 var serviceBusConnectionAppSettingName = 'ServiceBusConnection'
@@ -42,11 +42,11 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsightsInstrumentationKey
+          value: applicationInsightsInstrumentationKey
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: 'InstrumentationKey=${appInsightsInstrumentationKey}'
+          value: 'InstrumentationKey=${applicationInsightsInstrumentationKey}'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'

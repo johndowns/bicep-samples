@@ -36,7 +36,7 @@ param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup(
 @description('The name of the Cosmos DB account to create for storing the dead-letter firehose messages. This must be globally unique.')
 param deadLetterFirehoseCosmosDBAccountName string = 'deadletter${uniqueString(resourceGroup().id, 'deadletter')}'
 
-var appInsightsName = 'ServerlessMessagingDemo'
+var applicationInsightsName = 'ServerlessMessagingDemo'
 
 // Deploy the Service Bus resources.
 module serviceBusModule 'modules/service-bus.bicep' = {
@@ -50,11 +50,11 @@ module serviceBusModule 'modules/service-bus.bicep' = {
 }
 
 // Deploy the shared Application Insights instance.
-module appInsightsModule 'modules/application-insights.bicep' = {
-  name: 'appInsightsModule'
+module applicationInsightsModule 'modules/application-insights.bicep' = {
+  name: 'applicationInsightsModule'
   params: {
     location: location
-    appInsightsName: appInsightsName
+    applicationInsightsName: applicationInsightsName
   }
 }
 
@@ -75,7 +75,7 @@ module processorsModule 'modules/processors/processors.bicep' = {
     location: location
     functionAppName: processorFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
-    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.processorConnectionString
     serviceBusTopicNames: serviceBusTopicNames
     processSubscriptionName: serviceBusModule.outputs.processSubscriptionName
@@ -89,7 +89,7 @@ module firehoseModule 'modules/firehose/firehose.bicep' = {
     location: location
     functionAppName: firehoseFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
-    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
     firehoseQueueName: serviceBusModule.outputs.firehoseQueueName
     firehoseStorageAccountName: firehoseStorageAccountName    
@@ -103,7 +103,7 @@ module deadLetterFirehoseModule 'modules/dead-letter-firehose/dead-letter-fireho
     location: location
     functionAppName: firehoseFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
-    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
     deadLetterFirehoseQueueName: serviceBusModule.outputs.deadLetterFirehoseQueueName
     deadLetterFirehoseCosmosDBAccountName: deadLetterFirehoseCosmosDBAccountName
@@ -117,7 +117,7 @@ module sendersModule 'modules/senders/senders.bicep' = {
     location: location
     functionAppName: senderFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
-    appInsightsInstrumentationKey: appInsightsModule.outputs.instrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.senderConnectionString
     serviceBusTopicNames: serviceBusTopicNames
   }

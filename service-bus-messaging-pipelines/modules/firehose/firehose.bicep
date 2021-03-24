@@ -8,7 +8,7 @@ param functionAppName string
 param functionStorageAccountName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
-param appInsightsInstrumentationKey string
+param applicationInsightsInstrumentationKey string
 
 @description('TODO')
 @secure()
@@ -48,7 +48,7 @@ module firehoseFunctionModule 'function.bicep' = {
     functionStorageAccountName: functionStorageAccountName
     firehoseStorageAccountName: firehoseStorageAccountName
     firehoseContainerName: containerName
-    appInsightsInstrumentationKey: appInsightsInstrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
     firehoseQueueName: firehoseQueueName
   }

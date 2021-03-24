@@ -17,7 +17,7 @@ param firehoseStorageAccountName string
 param firehoseContainerName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
-param appInsightsInstrumentationKey string
+param applicationInsightsInstrumentationKey string
 
 @description('TODO')
 @secure()
@@ -40,7 +40,7 @@ module firehoseFunctionAppModule '../function-app.bicep' = {
     location: location
     appName: functionAppName
     functionStorageAccountName: functionStorageAccountName
-    appInsightsInstrumentationKey: appInsightsInstrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
     extraConfiguration: {
       name: firehoseStorageConnectionStringAppSettingName

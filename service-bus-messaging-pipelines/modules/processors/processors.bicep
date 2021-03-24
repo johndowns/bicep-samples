@@ -8,7 +8,7 @@ param functionAppName string
 param functionStorageAccountName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
-param appInsightsInstrumentationKey string
+param applicationInsightsInstrumentationKey string
 
 @description('TODO')
 @secure()
@@ -27,7 +27,7 @@ module processorFunctionAppModule '../function-app.bicep' = {
     location: location
     appName: functionAppName
     functionStorageAccountName: functionStorageAccountName
-    appInsightsInstrumentationKey: appInsightsInstrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
   }
 }

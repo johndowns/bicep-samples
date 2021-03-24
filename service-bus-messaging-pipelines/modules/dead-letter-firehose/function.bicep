@@ -20,7 +20,7 @@ param deadLetterFirehoseCosmosDBDatabaseName string
 param deadLetterFirehoseCosmosDBContainerName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
-param appInsightsInstrumentationKey string
+param applicationInsightsInstrumentationKey string
 
 @description('TODO')
 @secure()
@@ -38,7 +38,7 @@ module deadLetterFirehoseFunctionAppModule '../function-app.bicep' = {
     location: location
     appName: functionAppName
     functionStorageAccountName: functionStorageAccountName
-    appInsightsInstrumentationKey: appInsightsInstrumentationKey
+    applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
     extraConfiguration: {
       name: firehoseStorageConnectionStringAppSettingName
