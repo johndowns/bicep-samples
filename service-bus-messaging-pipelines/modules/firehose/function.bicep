@@ -74,7 +74,7 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
           name: 'blobOutput'
           type: 'blob'
           direction: 'out'
-          path: '${firehoseContainerName}/{DateTime}' // TODO can we put into a folder structure of Y/M/D/H and then include message ID with timestamp?
+          path: '${firehoseContainerName}/y={enqueuedTimeUtc.Year}/{m=enqueuedTimeUtc.Month}/d={enqueuedTimeUtc.Day}/h={enqueuedTimeUtc.Hour}/{messageId}.json'
           connection: firehoseStorageConnectionStringAppSettingName
         }
       ]
@@ -84,17 +84,41 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
         using System;
 
         public static void Run(
-            string message,
+            string contentType,
+            string correlationId,
+            string deadLetterSource,
             Int32 deliveryCount,
             DateTime enqueuedTimeUtc,
+            DateTime expiresAtUtc,
+            string label,
             string messageId,
+            string replyTo,
+            long sequenceNumber,
+            string to,
+            IDictionary<string, object> userProperties,
+            string message,
             TraceWriter log,
             out string blobOutput)
         {
             log.Info($"C# Service Bus trigger function processed message: {message}");
 
-            // TODO wrap in a JSON object?
-            blobOutput = message;
+            var logEntry = new {
+              contentType = contentType,
+              correlationId = correlationId,
+              deadLetterSource = deadLetterSource,
+              deliveryCount = deliveryCount,
+              enqueuedTimeUtc = enqueuedTimeUtc,
+              expiresAtUtc = expiresAtUtc,
+              label = label,
+              messageId = messageId,
+              replyTo = replyTo,
+              sequenceNumber = sequenceNumber,
+              to = to,
+              userProperties = userProperties,
+              message = message
+            };
+            JObject o = (JObject)JToken.FromObject(logEntry);
+            blobOutput = o.ToString();
         }
       '''
     }

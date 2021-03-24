@@ -21,6 +21,9 @@ param serviceBusTopicNames array = [
 @description('The name of the Azure Storage account to deploy for the Azure Functions apps to use for metadata. This must be globally unique.')
 param functionAppStorageAccountName string = 'fn${uniqueString(resourceGroup().id)}'
 
+@description('The name of the SKU to use when creating the Azure Storage account for the Azure Functions apps to use for metadata.')
+param functionAppStorageAccountSkuName string = 'Standard_LRS'
+
 @description('The name of the Azure Functions application to create for processing messages. This must be globally unique.')
 param processorFunctionAppName string = 'fn-processor-${uniqueString(resourceGroup().id, 'processor')}'
 
@@ -35,6 +38,9 @@ param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().i
 
 @description('The name of the Azure Storage account to deploy for storing the firehose messages. This must be globally unique.')
 param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup().id, 'firehose')}'
+
+@description('The name of the SKU to use when creating the Azure Storage account for storing the firehose messages.')
+param firehoseStorageAccountSkuName string = 'Standard_LRS'
 
 @description('The name of the Cosmos DB account to create for storing the dead-letter firehose messages. This must be globally unique.')
 param deadLetterFirehoseCosmosDBAccountName string = 'deadletter${uniqueString(resourceGroup().id, 'deadletter')}'
@@ -68,6 +74,7 @@ module functionAppStorageAccountModule 'modules/storage.bicep' = {
   params: {
     location: location
     storageAccountName: functionAppStorageAccountName
+    storageAccountSkuName: functionAppStorageAccountSkuName
   }
 }
 
@@ -95,7 +102,8 @@ module firehoseModule 'modules/firehose/firehose.bicep' = {
     applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
     firehoseQueueName: serviceBusModule.outputs.firehoseQueueName
-    firehoseStorageAccountName: firehoseStorageAccountName    
+    firehoseStorageAccountName: firehoseStorageAccountName
+    firehoseStorageAccountSkuName: firehoseStorageAccountSkuName
   }
 }
 

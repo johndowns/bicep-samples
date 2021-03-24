@@ -19,7 +19,6 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
   name: accountName
   location: location
   properties: {
-    enableFreeTier: true
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
       defaultConsistencyLevel: accountDefaultConsistencyLevel
