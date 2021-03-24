@@ -16,6 +16,9 @@ param deadLetterFirehoseCosmosDBDatabaseName string
 @description('The name of the Cosmos DB container that should contain the dead-letter firehose messages.')
 param deadLetterFirehoseCosmosDBContainerName string
 
+@description('The connection string to use when connecting to the Cosmos DB account for dead-letter firehose messages.')
+param deadLetterFirehoseCosmosDBConnectionString string
+
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
@@ -40,7 +43,7 @@ module deadLetterFirehoseFunctionAppModule '../function-app.bicep' = {
     serviceBusConnectionString: serviceBusConnectionString
     extraConfiguration: {
       name: firehoseStorageConnectionStringAppSettingName
-      value: 'TODO'
+      value: deadLetterFirehoseCosmosDBConnectionString
     }
   }
 }
@@ -74,7 +77,7 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
           databaseName: deadLetterFirehoseCosmosDBDatabaseName
           collectionName: deadLetterFirehoseCosmosDBContainerName
           direction: 'out'
-          connectionStringSetting: 'TODO'
+          connectionStringSetting: firehoseStorageConnectionStringAppSettingName
         }
       ]
     }
@@ -92,9 +95,8 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
         {
             log.Info($"C# Service Bus trigger function processed message: {message}");
 
-            // TODO wrap in a JSON object?
+            // TODO
             deadLetterDocument = new {
-              todo = 'todo',
               message = message
             };
         }

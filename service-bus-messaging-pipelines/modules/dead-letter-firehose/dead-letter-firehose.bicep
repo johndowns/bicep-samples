@@ -48,6 +48,7 @@ module deadLetterFirehoseFunctionModule 'function.bicep' = {
     deadLetterFirehoseCosmosDBAccountName: deadLetterFirehoseCosmosDBAccountName
     deadLetterFirehoseCosmosDBDatabaseName: databaseName
     deadLetterFirehoseCosmosDBContainerName: containerName
+    deadLetterFirehoseCosmosDBConnectionString: 'TODO'
     applicationInsightsInstrumentationKey: applicationInsightsInstrumentationKey
     serviceBusConnectionString: serviceBusConnectionString
     deadLetterFirehoseQueueName: deadLetterFirehoseQueueName
