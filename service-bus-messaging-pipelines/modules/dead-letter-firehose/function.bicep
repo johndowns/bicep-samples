@@ -17,7 +17,7 @@ param deadLetterFirehoseCosmosDBDatabaseName string
 param deadLetterFirehoseCosmosDBContainerName string
 
 @description('The connection string to use when connecting to the Cosmos DB account for dead-letter firehose messages.')
-// TODO @secure()
+@secure()
 param deadLetterFirehoseCosmosDBConnectionString string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
