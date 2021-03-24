@@ -14,30 +14,31 @@ param serviceBusSkuName string = 'Standard'
 
 @description('An array specifying the names of topics that should be deployed.')
 param serviceBusTopicNames array = [
-  'todo1'
-  'todo2'
+  'sample1'
+  'sample2'
 ]
 
 @description('The name of the Azure Storage account to deploy for the Azure Functions apps to use for metadata. This must be globally unique.')
 param functionAppStorageAccountName string = 'fn${uniqueString(resourceGroup().id)}'
 
-@description('The name of the Azure Functions application to create for listening to messages. This must be globally unique.')
+@description('The name of the Azure Functions application to create for processing messages. This must be globally unique.')
 param processorFunctionAppName string = 'fn-processor-${uniqueString(resourceGroup().id, 'processor')}'
 
-@description('TODO')
+@description('The name of the Azure Functions application to create for handling firehose messages. This must be globally unique.')
 param firehoseFunctionAppName string = 'fn-firehose-${uniqueString(resourceGroup().id, 'firehose')}'
 
-@description('TODO')
+@description('The name of the Azure Functions application to create for sending messages. This must be globally unique.')
 param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().id, 'sender')}'
 
-@description('TODO')
+@description('The name of the Azure Storage account to deploy for storing the firehose messages. This must be globally unique.')
 param firehoseStorageAccountName string = 'firehose${uniqueString(resourceGroup().id, 'firehose')}'
 
-@description('TODO')
+@description('The name of the Cosmos DB account to create for storing the dead-letter firehose messages. This must be globally unique.')
 param deadLetterFirehoseCosmosDBAccountName string = 'deadletter${uniqueString(resourceGroup().id, 'deadletter')}'
 
 var appInsightsName = 'ServerlessMessagingDemo'
 
+// Deploy the Service Bus resources.
 module serviceBusModule 'modules/service-bus.bicep' = {
   name: 'serviceBusModule'
   params: {
@@ -49,7 +50,6 @@ module serviceBusModule 'modules/service-bus.bicep' = {
 }
 
 // Deploy the shared Application Insights instance.
-
 module appInsightsModule 'modules/application-insights.bicep' = {
   name: 'appInsightsModule'
   params: {

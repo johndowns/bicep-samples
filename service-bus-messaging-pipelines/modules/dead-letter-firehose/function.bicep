@@ -19,7 +19,7 @@ param deadLetterFirehoseCosmosDBDatabaseName string
 @description('TODO')
 param deadLetterFirehoseCosmosDBContainerName string
 
-@description('TODO')
+@description('The instrumentation key used to identify Application Insights telemetry.')
 param appInsightsInstrumentationKey string
 
 @description('TODO')

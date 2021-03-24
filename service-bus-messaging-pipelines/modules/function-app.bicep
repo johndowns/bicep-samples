@@ -11,7 +11,7 @@ param serviceBusConnectionString string
 @description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
-@description('TODO')
+@description('The instrumentation key used to identify Application Insights telemetry.')
 param appInsightsInstrumentationKey string
 
 @description('TODO')

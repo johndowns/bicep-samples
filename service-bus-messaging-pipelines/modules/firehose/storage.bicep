@@ -1,10 +1,10 @@
 @description('The region into which the Azure Storage resources should be deployed.')
 param location string
 
-@description('TODO')
+@description('The name of the Azure Storage account to deploy for storing the firehose messages. This must be globally unique.')
 param storageAccountName string
 
-@description('TODO')
+@description('The name of the Azure Storage blob container that should be deployed for storing the firehose messages.')
 param containerName string
 
 @description('TODO')

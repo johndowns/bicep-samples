@@ -7,7 +7,7 @@ param functionAppName string
 @description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
-@description('TODO')
+@description('The instrumentation key used to identify Application Insights telemetry.')
 param appInsightsInstrumentationKey string
 
 @description('TODO')
@@ -17,7 +17,7 @@ param serviceBusConnectionString string
 @description('TODO')
 param deadLetterFirehoseQueueName string
 
-@description('TODO')
+@description('The name of the Cosmos DB account to create for storing the dead-letter firehose messages. This must be globally unique.')
 param deadLetterFirehoseCosmosDBAccountName string
 
 var databaseName = 'ServerlessMessagingDemo'

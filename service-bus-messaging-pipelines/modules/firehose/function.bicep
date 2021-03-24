@@ -16,7 +16,7 @@ param firehoseStorageAccountName string
 @description('TODO')
 param firehoseContainerName string
 
-@description('TODO')
+@description('The instrumentation key used to identify Application Insights telemetry.')
 param appInsightsInstrumentationKey string
 
 @description('TODO')

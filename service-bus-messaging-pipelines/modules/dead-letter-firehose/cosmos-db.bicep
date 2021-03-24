@@ -1,7 +1,7 @@
 @description('The region into which the resources should be deployed.')
 param location string
 
-@description('TODO')
+@description('The name of the Cosmos DB account to create. This must be globally unique.')
 param accountName string
 
 @description('TODO')
