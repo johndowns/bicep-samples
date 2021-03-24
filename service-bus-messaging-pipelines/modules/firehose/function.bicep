@@ -74,14 +74,16 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
           name: 'blobOutput'
           type: 'blob'
           direction: 'out'
-          path: '${firehoseContainerName}/y={enqueuedTimeUtc.Year}/{m=enqueuedTimeUtc.Month}/d={enqueuedTimeUtc.Day}/h={enqueuedTimeUtc.Hour}/{messageId}.json'
+          path: '${firehoseContainerName}/y={enqueuedTimeUtc.Year}/m={enqueuedTimeUtc.Month}/d={enqueuedTimeUtc.Day}/h={enqueuedTimeUtc.Hour}/{messageId}.json'
           connection: firehoseStorageConnectionStringAppSettingName
         }
       ]
     }
     files: {
       'run.csx': '''
+        #r "Newtonsoft.Json"
         using System;
+        using Newtonsoft.Json.Linq;
 
         public static void Run(
             string contentType,
