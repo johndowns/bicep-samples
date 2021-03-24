@@ -1,4 +1,4 @@
-@description('TODO')
+@description('The region into which the resources should be deployed.')
 param location string
 
 @description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
@@ -10,14 +10,14 @@ param functionStorageAccountName string
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
-@description('TODO')
+@description('The connection string to use when connecting to the Service Bus namespace.')
 @secure()
 param serviceBusConnectionString string
 
 @description('The list of topic names to create functions for.')
 param serviceBusTopicNames array
 
-@description('TODO')
+@description('The name of the topic subscriptions to use for processing messages.')
 param processSubscriptionName string
 
 // Create a function app.

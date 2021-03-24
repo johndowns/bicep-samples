@@ -4,14 +4,16 @@ param location string
 @description('The name of the Cosmos DB account to create. This must be globally unique.')
 param accountName string
 
-@description('TODO')
+@description('The name of the Cosmos DB database to create.')
 param databaseName string
 
-@description('TODO')
+@description('The name of the Cosmos DB container to create.')
 param containerName string
 
-@description('TODO')
+@description('The name of the document property containing the partition key.')
 param containerPartitionKey string
+
+var accountDefaultConsistencyLevel = 'Session'
 
 resource account 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
   name: accountName
@@ -20,7 +22,7 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
     enableFreeTier: true
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
-      defaultConsistencyLevel: 'Session' // TODO parameterize
+      defaultConsistencyLevel: accountDefaultConsistencyLevel
     }
     locations: [
       {

@@ -1,31 +1,29 @@
 @description('The region into which the resources should be deployed.')
 param location string
 
-@description('TODO')
+@description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
 param functionAppName string
 
 @description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
-@description('TODO')
-param functionName string
-
-@description('TODO')
+@description('The name of the Azure Storage account to deploy for storing the firehose messages. This must be globally unique.')
 param firehoseStorageAccountName string
 
-@description('TODO')
+@description('The name of the Azure Storage blob container for storing the firehose messages.')
 param firehoseContainerName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
-@description('TODO')
+@description('The connection string to use when connecting to the Service Bus namespace.')
 @secure()
 param serviceBusConnectionString string
 
-@description('TODO')
+@description('The name of the firehose queue.')
 param firehoseQueueName string
 
+var functionName = 'ProcessFirehoseQueueMessage'
 var firehoseStorageConnectionStringAppSettingName = 'FirehoseStorage'
 
 // Get a reference to the firehose storage account.

@@ -4,10 +4,16 @@ param location string
 @description('The name of the Azure Storage account to deploy for storing the firehose messages. This must be globally unique.')
 param storageAccountName string
 
+@description('The name of the SKU to use when creating the Azure Storage account.')
+param storageAccountSkuName string
+
+@description('The name of the access tier to use when creating the Azure Storage account.')
+param storageAccountAccessTier string
+
 @description('The name of the Azure Storage blob container that should be deployed for storing the firehose messages.')
 param containerName string
 
-@description('TODO')
+@description('The immutability period that should be configured on the Azure Storage blob container.')
 @minValue(1)
 param containerImmutabilityPeriodSinceCreationInDays int
 
@@ -15,12 +21,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
   location: location
   sku: {
-    name: 'Standard_LRS' // TODO parameterize
+    name: storageAccountSkuName
   }
   kind: 'StorageV2'
   properties: {
     supportsHttpsTrafficOnly: true
-    accessTier: 'Hot' // TODO parameterize
+    accessTier: storageAccountAccessTier
   }
 
   resource blobService 'blobServices' existing = {

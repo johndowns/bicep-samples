@@ -1,34 +1,32 @@
 @description('The region into which the resources should be deployed.')
 param location string
 
-@description('TODO')
+@description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
 param functionAppName string
 
 @description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
-@description('TODO')
-param functionName string
-
-@description('TODO')
+@description('The name of the Cosmos DB account that should contain the dead-letter firehose messages.')
 param deadLetterFirehoseCosmosDBAccountName string
 
-@description('TODO')
+@description('The name of the Cosmos DB database that should contain the dead-letter firehose messages.')
 param deadLetterFirehoseCosmosDBDatabaseName string
 
-@description('TODO')
+@description('The name of the Cosmos DB container that should contain the dead-letter firehose messages.')
 param deadLetterFirehoseCosmosDBContainerName string
 
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
-@description('TODO')
+@description('The connection string to use when connecting to the Service Bus namespace.')
 @secure()
 param serviceBusConnectionString string
 
-@description('TODO')
+@description('The name of the dead-letter firehose queue.')
 param deadLetterFirehoseQueueName string
 
+var functionName = 'ProcessDeadLetterFirehoseQueueMessage'
 var firehoseStorageConnectionStringAppSettingName = 'FirehoseStorage'
 
 // Create a function app and function to listen to the firehose queue and save the messages to the firehose storage account.

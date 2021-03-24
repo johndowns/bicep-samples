@@ -1,7 +1,7 @@
 @description('The region into which the resources should be deployed.')
 param location string
 
-@description('TODO')
+@description('The name of the Azure Functions application in which to create the functions. This must be globally unique.')
 param functionAppName string
 
 @description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
@@ -10,11 +10,11 @@ param functionStorageAccountName string
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
-@description('TODO')
+@description('The connection string to use when connecting to the Service Bus namespace.')
 @secure()
 param serviceBusConnectionString string
 
-@description('TODO')
+@description('The name of the dead-letter firehose queue.')
 param deadLetterFirehoseQueueName string
 
 @description('The name of the Cosmos DB account to create for storing the dead-letter firehose messages. This must be globally unique.')
@@ -23,7 +23,6 @@ param deadLetterFirehoseCosmosDBAccountName string
 var databaseName = 'ServerlessMessagingDemo'
 var containerName = 'deadletteredmessages'
 var containerPartitionKey = '/todo'
-var functionName = 'ProcessDeadLetterFirehoseQueueMessage'
 
 // Create a Cosmos DB account, database, and container for storing the dead-lettered messages.
 module deadLetterFirehoseCosmosDBModule 'cosmos-db.bicep' = {
@@ -45,7 +44,6 @@ module deadLetterFirehoseFunctionModule 'function.bicep' = {
   params: {
     location: location
     functionAppName: functionAppName
-    functionName: functionName
     functionStorageAccountName: functionStorageAccountName
     deadLetterFirehoseCosmosDBAccountName: deadLetterFirehoseCosmosDBAccountName
     deadLetterFirehoseCosmosDBDatabaseName: databaseName

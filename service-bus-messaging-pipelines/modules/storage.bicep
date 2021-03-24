@@ -5,10 +5,14 @@ param location string
 param storageAccountName string
 
 @description('The name of the SKU to use when creating the Azure Storage account.')
-param storageAccountSkuName string = 'Standard_LRS' // TODO parameterize
+param storageAccountSkuName string
 
 @description('The name of the access tier to use when creating the Azure Storage account.')
-param storageAccountAccessTier string = 'Hot' // TODO parameterize
+@allowed([
+  'Cool'
+  'Hot'
+])
+param storageAccountAccessTier string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName

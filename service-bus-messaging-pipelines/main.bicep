@@ -27,6 +27,9 @@ param processorFunctionAppName string = 'fn-processor-${uniqueString(resourceGro
 @description('The name of the Azure Functions application to create for handling firehose messages. This must be globally unique.')
 param firehoseFunctionAppName string = 'fn-firehose-${uniqueString(resourceGroup().id, 'firehose')}'
 
+@description('The name of the Azure Functions application to create for handling dead-letter firehose messages. This must be globally unique.')
+param deadLetterFirehoseFunctionAppName string = 'fn-deadletter-${uniqueString(resourceGroup().id, 'firehose')}'
+
 @description('The name of the Azure Functions application to create for sending messages. This must be globally unique.')
 param senderFunctionAppName string = 'fn-sender-${uniqueString(resourceGroup().id, 'sender')}'
 
@@ -101,7 +104,7 @@ module deadLetterFirehoseModule 'modules/dead-letter-firehose/dead-letter-fireho
   name: 'deadLetterFirehoseModule'
   params: {
     location: location
-    functionAppName: firehoseFunctionAppName
+    functionAppName: deadLetterFirehoseFunctionAppName
     functionStorageAccountName: functionAppStorageAccountModule.outputs.storageAccountName
     applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.instrumentationKey
     serviceBusConnectionString: serviceBusModule.outputs.firehoseConnectionString
