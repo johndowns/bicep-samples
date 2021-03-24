@@ -4,7 +4,7 @@ param location string
 @description('TODO')
 param functionAppName string
 
-@description('TODO')
+@description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
 @description('TODO')
@@ -26,7 +26,7 @@ var containerPartitionKey = '/todo'
 var functionName = 'ProcessDeadLetterFirehoseQueueMessage'
 
 // Create a Cosmos DB account, database, and container for storing the dead-lettered messages.
-module deadLetterFirehoseCosmosDBModule 'cosmosDB.bicep' = {
+module deadLetterFirehoseCosmosDBModule 'cosmos-db.bicep' = {
   name: 'deadLetterFirehoseCosmosDBModule'
   params: {
     location: location

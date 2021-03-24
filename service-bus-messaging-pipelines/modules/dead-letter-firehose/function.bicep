@@ -4,7 +4,7 @@ param location string
 @description('TODO')
 param functionAppName string
 
-@description('TODO')
+@description('The name of the Azure Storage account that the Azure Functions app should use for metadata.')
 param functionStorageAccountName string
 
 @description('TODO')

@@ -18,7 +18,7 @@ param serviceBusTopicNames array = [
   'todo2'
 ]
 
-@description('TODO')
+@description('The name of the Azure Storage account to deploy for the Azure Functions apps to use for metadata. This must be globally unique.')
 param functionAppStorageAccountName string = 'fn${uniqueString(resourceGroup().id)}'
 
 @description('The name of the Azure Functions application to create for listening to messages. This must be globally unique.')
@@ -97,7 +97,7 @@ module firehoseModule 'modules/firehose/firehose.bicep' = {
 }
 
 // Deploy the resources for processing the dead-lettered firehose queue messages.
-module deadLetterFirehoseModule 'modules/deadLetterFirehose/deadLetterFirehose.bicep' = {
+module deadLetterFirehoseModule 'modules/dead-letter-firehose/dead-letter-firehose.bicep' = {
   name: 'deadLetterFirehoseModule'
   params: {
     location: location
