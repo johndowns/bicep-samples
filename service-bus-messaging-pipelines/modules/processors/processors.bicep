@@ -65,14 +65,14 @@ resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
             Int32 deliveryCount,
             DateTime enqueuedTimeUtc,
             string messageId,
-            TraceWriter log,
-            MessageReceiver receiver)
+            TraceWriter log)
         {
             log.Info($"C# Service Bus trigger function processed message: {message}");
 
-            // Simulate occasional failures by failing to process approximately 50% of messages.
-            // These messages are dead-lettered.
-            if (_random.Next(1, 2) == 1)
+            // Simulate occasional failures by failing to process a subset of messages.
+            // Because the Service Bus subscription is configured with maxDeliveryAttempts of 1,
+            // these messages are dead-lettered.
+            if (_random.Next(1, 3) == 1)
             {
                 throw new Exception();
             }
