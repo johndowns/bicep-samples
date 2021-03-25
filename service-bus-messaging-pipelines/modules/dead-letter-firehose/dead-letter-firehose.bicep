@@ -22,7 +22,7 @@ param deadLetterFirehoseCosmosDBAccountName string
 
 var databaseName = 'ServerlessMessagingDemo'
 var containerName = 'deadletteredmessages'
-var containerPartitionKey = '/todo'
+var containerPartitionKey = '/deadLetterSource'
 
 // Create a Cosmos DB account, database, and container for storing the dead-lettered messages.
 module deadLetterFirehoseCosmosDBModule 'cosmos-db.bicep' = {

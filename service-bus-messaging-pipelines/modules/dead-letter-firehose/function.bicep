@@ -87,17 +87,35 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
         using System;
 
         public static void Run(
-            string message,
+            string contentType,
+            string correlationId,
+            string deadLetterSource,
             Int32 deliveryCount,
             DateTime enqueuedTimeUtc,
+            DateTime expiresAtUtc,
+            string label,
             string messageId,
+            string replyTo,
+            long sequenceNumber,
+            string to,
+            IDictionary<string, object> userProperties,
+            string message,
             TraceWriter log,
             out object deadLetterDocument)
         {
-            log.Info($"C# Service Bus trigger function processed message: {message}");
-
-            // TODO
             deadLetterDocument = new {
+              contentType = contentType,
+              correlationId = correlationId,
+              deadLetterSource = deadLetterSource,
+              deliveryCount = deliveryCount,
+              enqueuedTimeUtc = enqueuedTimeUtc,
+              expiresAtUtc = expiresAtUtc,
+              label = label,
+              messageId = messageId,
+              replyTo = replyTo,
+              sequenceNumber = sequenceNumber,
+              to = to,
+              userProperties = userProperties,
               message = message
             };
         }

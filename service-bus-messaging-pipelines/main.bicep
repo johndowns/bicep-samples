@@ -46,6 +46,7 @@ param firehoseStorageAccountSkuName string = 'Standard_LRS'
 param deadLetterFirehoseCosmosDBAccountName string = 'deadletter${uniqueString(resourceGroup().id, 'deadletter')}'
 
 var applicationInsightsName = 'ServerlessMessagingDemo'
+var processingMaxDeliveryCount = 1 // If messages are failed to be processed, they won't be retried. Normally you would want to keep this at its default value of 10.
 
 // Deploy the Service Bus resources.
 module serviceBusModule 'modules/service-bus.bicep' = {
@@ -55,6 +56,7 @@ module serviceBusModule 'modules/service-bus.bicep' = {
     namespaceName: serviceBusNamespaceName
     skuName: serviceBusSkuName
     topicNames: serviceBusTopicNames
+    processingMaxDeliveryCount: processingMaxDeliveryCount
   }
 }
 

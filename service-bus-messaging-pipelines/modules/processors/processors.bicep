@@ -58,18 +58,28 @@ resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
       'run.csx': '''
         using System;
 
+        private static readonly Random _random = new Random();  
+
         public static void Run(
             string message,
             Int32 deliveryCount,
             DateTime enqueuedTimeUtc,
             string messageId,
-            TraceWriter log)
+            TraceWriter log,
+            MessageReceiver receiver)
         {
             log.Info($"C# Service Bus trigger function processed message: {message}");
-        
-            log.Info($"EnqueuedTimeUtc={enqueuedTimeUtc}");
-            log.Info($"DeliveryCount={deliveryCount}");
-            log.Info($"MessageId={messageId}");
+
+            // Simulate occasional failures by failing to process approximately 50% of messages.
+            // These messages are dead-lettered.
+            if (_random.Next(1, 2) == 1)
+            {
+                throw new Exception();
+            }
+            else
+            {
+                log.Info($"Processing message with ID '{messageId}'.");
+            }
         }
       '''
     }

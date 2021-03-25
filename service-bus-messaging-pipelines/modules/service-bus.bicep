@@ -15,6 +15,9 @@ param skuName string
 @description('An array specifying the names of topics that should be deployed.')
 param topicNames array
 
+@description('The number of times that Service Bus should attempt to deliver messages to the processing function before dead-lettering the messages.')
+param processingMaxDeliveryCount int
+
 var processorAuthorizationRuleName = 'ProcessorFunction'
 var firehoseAuthorizationRuleName = 'FirehoseFunction'
 var senderAuthorizationRuleName = 'SenderFunction'
@@ -84,6 +87,7 @@ resource topicsSubscriptionProcess 'Microsoft.ServiceBus/namespaces/topics/subsc
   ]
   properties: {
     forwardDeadLetteredMessagesTo: deadLetterFirehoseQueueName
+    maxDeliveryCount: processingMaxDeliveryCount
   }
 }]
 

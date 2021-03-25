@@ -67,18 +67,26 @@ resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
     files: {
       'run.csx': '''
         #r "Newtonsoft.Json"
+
         using System.Net;
         using Microsoft.AspNetCore.Mvc;
         using Microsoft.Extensions.Primitives;
         using Newtonsoft.Json;
 
-        public static async Task<IActionResult> Run(HttpRequest req, ILogger log, IAsyncCollector<string> outputMessage)
+        public static async Task<IActionResult> Run(
+          HttpRequest req,
+          ILogger log,
+          IAsyncCollector<string> outputMessage)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
+            int.TryParse(req.Query["count"], out var count);
             
-            await outputMessage.AddAsync(requestBody);
-            return new OkObjectResult("Sent message to topic.");
+            for (var i = 0; i < count; i++)
+            {
+              await outputMessage.AddAsync(requestBody);
+            }
+            return new OkObjectResult($"Sent {count} message(s) to topic.");
         }
       '''
     }
