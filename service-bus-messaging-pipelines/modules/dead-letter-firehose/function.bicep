@@ -16,10 +16,6 @@ param deadLetterFirehoseCosmosDBDatabaseName string
 @description('The name of the Cosmos DB container that should contain the dead-letter firehose messages.')
 param deadLetterFirehoseCosmosDBContainerName string
 
-@description('The connection string to use when connecting to the Cosmos DB account for dead-letter firehose messages.')
-@secure()
-param deadLetterFirehoseCosmosDBConnectionString string
-
 @description('The instrumentation key used to identify Application Insights telemetry.')
 param applicationInsightsInstrumentationKey string
 
@@ -33,6 +29,11 @@ param deadLetterFirehoseQueueName string
 var functionName = 'ProcessDeadLetterFirehoseQueueMessage'
 var firehoseStorageConnectionStringAppSettingName = 'FirehoseStorage'
 
+// Get a reference to the dead-letter firehose Cosmos DB account.
+resource deadLetterFirehoseCosmosDBAccount 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' existing = {
+  name: deadLetterFirehoseCosmosDBAccountName
+}
+
 // Create a function app and function to listen to the firehose queue and save the messages to the firehose storage account.
 module deadLetterFirehoseFunctionAppModule '../function-app.bicep' = {
   name: 'deadLetterFirehoseFunctionAppModule'
@@ -44,7 +45,7 @@ module deadLetterFirehoseFunctionAppModule '../function-app.bicep' = {
     serviceBusConnectionString: serviceBusConnectionString
     extraConfiguration: {
       name: firehoseStorageConnectionStringAppSettingName
-      value: deadLetterFirehoseCosmosDBConnectionString
+      value: listConnectionStrings(deadLetterFirehoseCosmosDBAccount.id, deadLetterFirehoseCosmosDBAccount.apiVersion).connectionStrings[0].connectionString
     }
   }
 }

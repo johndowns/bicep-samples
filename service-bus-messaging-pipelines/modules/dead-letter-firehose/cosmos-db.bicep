@@ -28,6 +28,11 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
         locationName: location
       }
     ]
+    capabilities: [
+      {
+        name: 'EnableServerless'
+      }
+    ]
   }
 }
 
@@ -38,9 +43,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2020-04-01
     resource: {
       id: databaseName
     }
-    options: {
-      throughput: 400 // TODO parameterize, maybe make serverless
-    }
+    options: {}
   }
 }
 
