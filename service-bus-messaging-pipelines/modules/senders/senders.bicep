@@ -95,5 +95,5 @@ resource topicFunction 'Microsoft.Web/sites/functions@2020-06-01' = [for service
 
 output functionsUrls array = [for serviceBusTopicName in serviceBusTopicNames: {
   topicName: serviceBusTopicName
-  url: 'https://${senderFunctionAppModule.outputs.functionAppHostName}/api/Send-${serviceBusTopicName}'
+  url: 'https://${senderFunctionAppModule.outputs.functionAppHostName}/api/Send-${serviceBusTopicName}?count=5'
 }]
