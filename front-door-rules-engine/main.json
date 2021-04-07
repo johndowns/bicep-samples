@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.214.15117",
+      "templateHash": "2134278461912275924"
+    }
+  },
   "parameters": {
     "frontDoorName": {
       "type": "string"
@@ -37,7 +44,7 @@
         ]
       },
       "dependsOn": [
-        "[extensionResourceId(resourceGroup().id, 'Microsoft.Resources/deployments', 'front-door-deployment-1')]"
+        "[resourceId('Microsoft.Resources/deployments', 'front-door-deployment-1')]"
       ]
     },
     {
@@ -63,6 +70,13 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.214.15117",
+              "templateHash": "354511271079573479"
+            }
+          },
           "parameters": {
             "frontDoorName": {
               "type": "string"
@@ -200,6 +214,13 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.214.15117",
+              "templateHash": "354511271079573479"
+            }
+          },
           "parameters": {
             "frontDoorName": {
               "type": "string"
